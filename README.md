@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # MindNest
 MindNest is a mobile application designed to make mental health support more accessible, personalized, and consistent. It bridges the gap between patients and therapists by combining secure real-time consultations with intelligent digital tools that extend care beyond therapy sessions. The platform encourages continuous self-reflection, structured treatment management, and early detection of emotional distress helping individuals take better control of their mental well-being.
 # Core Features 

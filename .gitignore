@@ -1,0 +1,17 @@
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+.pub-cache/
+build/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+*.iml
+
+# Android
+.android/
+.gradle/
+local.properties
+
+# VS Code/IDE
+.idea/
+*.log

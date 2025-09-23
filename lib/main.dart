@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/home_screen.dart';
@@ -7,6 +9,23 @@ import 'screens/home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Performance optimizations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // Set system UI overlay style
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
+  // Initialize Supabase
   await Supabase.initialize(
     url: 'https://yqhgsmrtxgfjuljazoie.supabase.co',
     anonKey:
@@ -17,6 +36,8 @@ void main() async {
 }
 
 class MindNestApp extends StatelessWidget {
+  const MindNestApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -26,36 +47,15 @@ class MindNestApp extends StatelessWidget {
         primarySwatch: Colors.deepPurple,
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        // Performance optimizations
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: AuthenticationGate(),
+      home: SplashScreen(),
       routes: {
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
         '/home': (context) => HomeScreen(),
-      },
-    );
-  }
-}
-
-class AuthenticationGate extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<AuthState>(
-      stream: Supabase.instance.client.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-
-        final Session? session = snapshot.hasData
-            ? snapshot.data!.session
-            : null;
-
-        if (session != null) {
-          return HomeScreen();
-        } else {
-          return LoginScreen();
-        }
+        '/splash': (context) => SplashScreen(),
       },
     );
   }

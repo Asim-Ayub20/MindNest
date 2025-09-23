@@ -33,11 +33,14 @@ class PerformanceWrapper extends StatefulWidget {
   final Widget child;
   final String name;
 
-  const PerformanceWrapper({Key? key, required this.child, required this.name})
-    : super(key: key);
+  const PerformanceWrapper({
+    super.key,
+    required this.child,
+    required this.name,
+  });
 
   @override
-  _PerformanceWrapperState createState() => _PerformanceWrapperState();
+  State<PerformanceWrapper> createState() => _PerformanceWrapperState();
 }
 
 class _PerformanceWrapperState extends State<PerformanceWrapper> {
@@ -88,13 +91,13 @@ class OptimizedImage extends StatelessWidget {
   final Widget? placeholder;
 
   const OptimizedImage({
-    Key? key,
+    super.key,
     required this.imageUrl,
     this.width,
     this.height,
     this.fit = BoxFit.cover,
     this.placeholder,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

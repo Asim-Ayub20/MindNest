@@ -5,7 +5,7 @@ class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  _SignupScreenState createState() => _SignupScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
 class _SignupScreenState extends State<SignupScreen> {
@@ -35,7 +35,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (response.user != null) {
         _showMessage('Account created! Please check your email to verify.');
-        Navigator.pushReplacementNamed(context, '/login');
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
       }
     } on AuthException catch (error) {
       _showMessage('Signup failed: ${error.message}');

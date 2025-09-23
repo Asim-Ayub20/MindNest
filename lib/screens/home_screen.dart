@@ -7,11 +7,15 @@ class HomeScreen extends StatelessWidget {
   Future<void> handleLogout(BuildContext context) async {
     try {
       await Supabase.instance.client.auth.signOut();
-      Navigator.pushReplacementNamed(context, '/login');
+      if (context.mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     } catch (error) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error logging out: $error')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error logging out: $error')));
+      }
     }
   }
 

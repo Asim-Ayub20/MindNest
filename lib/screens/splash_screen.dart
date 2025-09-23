@@ -9,7 +9,7 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen>
@@ -200,11 +200,13 @@ class _SplashScreenState extends State<SplashScreen>
                                 width: 120,
                                 height: 120,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(30),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 20,
                                       offset: Offset(0, 10),
                                     ),
@@ -246,7 +248,9 @@ class _SplashScreenState extends State<SplashScreen>
                                       'Your Mental Wellness Journey',
                                       style: TextStyle(
                                         fontSize: 18,
-                                        color: Colors.white.withOpacity(0.9),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.9,
+                                        ),
                                         fontWeight: FontWeight.w300,
                                         letterSpacing: 1,
                                       ),
@@ -273,7 +277,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     height: 30,
                                     child: CircularProgressIndicator(
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white.withOpacity(0.8),
+                                        Colors.white.withValues(alpha: 0.8),
                                       ),
                                       strokeWidth: 3,
                                     ),
@@ -282,7 +286,9 @@ class _SplashScreenState extends State<SplashScreen>
                                   Text(
                                     'Preparing your sanctuary...',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
                                     ),

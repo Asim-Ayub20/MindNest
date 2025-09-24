@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
+import 'screens/user_type_selection_screen.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -53,7 +53,7 @@ class MindNestApp extends StatelessWidget {
       home: SplashScreen(),
       routes: {
         '/login': (context) => LoginScreen(),
-        '/signup': (context) => SignupScreen(),
+        '/signup': (context) => UserTypeSelectionScreen(),
         '/home': (context) => HomeScreen(),
         '/splash': (context) => SplashScreen(),
       },

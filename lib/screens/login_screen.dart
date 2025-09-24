@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
-import 'signup_screen.dart';
 import 'home_screen.dart';
 import 'password_reset_screen.dart';
 
@@ -547,11 +546,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          CustomPageTransitions.slideFromRight<void>(
-                            SignupScreen(),
-                          ),
-                        );
+                        Navigator.of(context).pushReplacementNamed('/signup');
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,

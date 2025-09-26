@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
-import 'home_screen.dart';
-import 'password_reset_screen.dart';
+import 'simple_password_reset_screen.dart';
+import 'email_verification_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,143 +14,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController otpController = TextEditingController();
   bool isLoading = false;
   bool isPasswordVisible = false;
-  bool isOtpMode = false;
-  String maskedEmail = '';
-
-  // Utility function to mask email
-  String maskEmail(String email) {
-    if (email.isEmpty) return '';
-
-    final parts = email.split('@');
-    if (parts.length != 2) return email;
-
-    final username = parts[0];
-    final domain = parts[1];
-
-    if (username.length <= 3) {
-      return '${username.substring(0, 1)}***@$domain';
-    } else {
-      return '${username.substring(0, 3)}***@$domain';
-    }
-  }
-
-  Future<void> handleOtpLogin() async {
-    if (!isOtpMode) {
-      // Switch to OTP mode and send OTP
-      await _sendOTP();
-    } else {
-      // Verify OTP and login
-      await _verifyOTP();
-    }
-  }
-
-  Future<void> _sendOTP() async {
-    if (emailController.text.isEmpty) {
-      _showMessage('Please enter your email address');
-      return;
-    }
-
-    if (!RegExp(
-      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-    ).hasMatch(emailController.text)) {
-      _showMessage('Please enter a valid email address');
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final email = emailController.text.trim();
-
-      // Use signInWithOtp with shouldCreateUser: false to only allow existing users
-      await Supabase.instance.client.auth.signInWithOtp(
-        email: email,
-        emailRedirectTo: 'mindnest://login',
-        shouldCreateUser: false, // This prevents auto-signup
-      );
-
-      setState(() {
-        maskedEmail = maskEmail(email);
-        isOtpMode = true;
-        isLoading = false;
-      });
-
-      _showMessage('Verification code sent to your email', isError: false);
-    } on AuthException catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-
-      if (error.message.contains('Signup not allowed') ||
-          error.message.contains('User not found') ||
-          error.message.contains('Invalid login credentials')) {
-        _showMessage(
-          'No account found with this email address. Please sign up first.',
-        );
-      } else {
-        _showMessage('Failed to send verification code: ${error.message}');
-      }
-    } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('An unexpected error occurred. Please try again.');
-    }
-  }
-
-  Future<void> _verifyOTP() async {
-    if (otpController.text.isEmpty) {
-      _showMessage('Please enter the verification code');
-      return;
-    }
-
-    if (otpController.text.length != 6) {
-      _showMessage('Verification code must be 6 digits');
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final AuthResponse response = await Supabase.instance.client.auth
-          .verifyOTP(
-            token: otpController.text.trim(),
-            type: OtpType.email,
-            email: emailController.text.trim(),
-          );
-
-      if (response.user != null) {
-        setState(() {
-          isLoading = false;
-        });
-
-        _showMessage('Login successful!', isError: false);
-
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            CustomPageTransitions.fadeTransition<void>(HomeScreen()),
-          );
-        }
-      }
-    } on AuthException catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('Invalid verification code: ${error.message}');
-    } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('An unexpected error occurred. Please try again.');
-    }
-  }
 
   Future<void> handleLogin() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
@@ -163,6 +28,54 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      // First check if login is allowed using database function
+      try {
+        final loginCheck = await Supabase.instance.client.rpc(
+          'app_auth_check',
+          params: {
+            'user_email': emailController.text.trim(),
+            'check_type': 'login',
+          },
+        );
+
+        print('Login check result: $loginCheck'); // Debug log
+
+        if (loginCheck['allowed'] == false) {
+          final reason = loginCheck['reason'] as String;
+
+          if (reason == 'User not found') {
+            _showMessage(
+              'No account found with this email. Please sign up first.',
+            );
+            return;
+          } else if (reason == 'Email not verified') {
+            final role = loginCheck['role'] as String? ?? 'patient';
+            _showMessage(
+              'Please verify your email before logging in.',
+              isError: false,
+            );
+
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  EmailVerificationScreen(
+                    email: emailController.text.trim(),
+                    userType: role,
+                  ),
+                ),
+              );
+            }
+            return;
+          } else if (reason == 'Account not active') {
+            _showMessage('Your account is not active. Please contact support.');
+            return;
+          }
+        }
+      } catch (e) {
+        print('Database login check failed: $e');
+        // Continue with login attempt even if check fails
+      }
+
       final AuthResponse response = await Supabase.instance.client.auth
           .signInWithPassword(
             email: emailController.text.trim(),
@@ -170,16 +83,68 @@ class _LoginScreenState extends State<LoginScreen> {
           );
 
       if (response.user != null) {
+        // Double-check email verification status
         if (response.user!.emailConfirmedAt == null) {
-          _showMessage('Please verify your email before logging in');
+          _showMessage(
+            'Please verify your email before logging in.',
+            isError: false,
+          );
+          // Sign out the user since they haven't verified
+          await Supabase.instance.client.auth.signOut();
+
+          // Get user role from profile to navigate to verification screen
+          try {
+            final profile = await Supabase.instance.client
+                .from('profiles')
+                .select('role')
+                .eq('email', emailController.text.trim())
+                .single();
+
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  EmailVerificationScreen(
+                    email: emailController.text.trim(),
+                    userType: profile['role'] ?? 'patient',
+                  ),
+                ),
+              );
+            }
+          } catch (e) {
+            // If we can't get the profile, still show verification screen
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  EmailVerificationScreen(
+                    email: emailController.text.trim(),
+                    userType: 'patient', // Default fallback
+                  ),
+                ),
+              );
+            }
+          }
           return;
         }
 
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            CustomPageTransitions.fadeTransition<void>(HomeScreen()),
+        // Log successful login
+        try {
+          await Supabase.instance.client.rpc(
+            'log_user_login',
+            params: {
+              'user_uuid': response.user!.id,
+              'login_success': true,
+              'ip_addr': null,
+              'user_agent_string': null,
+              'device_metadata': {},
+            },
           );
+        } catch (e) {
+          // Continue even if logging fails
+          print('Login logging failed: $e');
         }
+
+        // Don't navigate here - let the auth listener handle it
+        debugPrint('Login successful, auth listener will handle navigation');
       }
     } on AuthException catch (error) {
       _showMessage('Login failed: ${error.message}');
@@ -313,9 +278,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       SizedBox(height: 20),
 
-                      // Dynamic password/OTP field
+                      // Password field
                       Text(
-                        isOtpMode ? 'Verification Code' : 'Password',
+                        'Password',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -323,29 +288,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       SizedBox(height: 8),
-                      if (isOtpMode && maskedEmail.isNotEmpty)
-                        Padding(
-                          padding: EdgeInsets.only(bottom: 8),
-                          child: RichText(
-                            text: TextSpan(
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF6B7280),
-                                height: 1.5,
-                              ),
-                              children: [
-                                TextSpan(text: 'Code sent to '),
-                                TextSpan(
-                                  text: maskedEmail,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF8B7CF6),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       Container(
                         decoration: BoxDecoration(
                           color: Color(0xFFF9FAFB),
@@ -353,129 +295,57 @@ class _LoginScreenState extends State<LoginScreen> {
                           border: Border.all(color: Color(0xFFE5E7EB)),
                         ),
                         child: TextField(
-                          controller: isOtpMode
-                              ? otpController
-                              : passwordController,
-                          obscureText: isOtpMode ? false : !isPasswordVisible,
+                          controller: passwordController,
+                          obscureText: !isPasswordVisible,
                           decoration: InputDecoration(
-                            hintText: isOtpMode
-                                ? 'Enter 6-digit code'
-                                : 'Enter your password',
+                            hintText: 'Enter your password',
                             hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 16,
                             ),
-                            suffixIcon: isOtpMode
-                                ? null
-                                : IconButton(
-                                    icon: Icon(
-                                      isPasswordVisible
-                                          ? Icons.visibility
-                                          : Icons.visibility_off,
-                                      color: Color(0xFF9CA3AF),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        isPasswordVisible = !isPasswordVisible;
-                                      });
-                                    },
-                                  ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  isPasswordVisible = !isPasswordVisible;
+                                });
+                              },
+                            ),
                           ),
-                          keyboardType: isOtpMode
-                              ? TextInputType.number
-                              : TextInputType.text,
-                          maxLength: isOtpMode ? 6 : null,
-                          buildCounter: isOtpMode
-                              ? (
-                                  context, {
-                                  required currentLength,
-                                  required isFocused,
-                                  maxLength,
-                                }) => null
-                              : null,
+                          keyboardType: TextInputType.text,
                         ),
                       ),
                       SizedBox(height: 16),
 
-                      // Dynamic button options based on mode
-                      if (isOtpMode)
-                        Wrap(
-                          alignment: WrapAlignment.spaceBetween,
-                          spacing: 8,
-                          children: [
-                            TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () async {
-                                      await _sendOTP();
-                                    },
-                              child: Text(
-                                'Resend code',
-                                style: TextStyle(
-                                  color: Color(0xFF8B7CF6),
-                                  fontWeight: FontWeight.w500,
+                      // Forgot password button
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                CustomPageTransitions.slideFromRight<void>(
+                                  SimplePasswordResetScreen(),
                                 ),
+                              );
+                            },
+                            child: Text(
+                              'Forgot password?',
+                              style: TextStyle(
+                                color: Color(0xFF8B7CF6),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        isOtpMode = false;
-                                        otpController.clear();
-                                        maskedEmail = '';
-                                      });
-                                    },
-                              child: Text(
-                                'Use password instead',
-                                style: TextStyle(
-                                  color: Color(0xFF8B7CF6),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      else
-                        Wrap(
-                          alignment: WrapAlignment.spaceBetween,
-                          spacing: 8,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  CustomPageTransitions.slideFromRight<void>(
-                                    PasswordResetScreen(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  color: Color(0xFF8B7CF6),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () async {
-                                      await handleOtpLogin();
-                                    },
-                              child: Text(
-                                'Use OTP instead',
-                                style: TextStyle(
-                                  color: Color(0xFF8B7CF6),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
                       SizedBox(height: 24),
 
                       // Sign In Button
@@ -491,9 +361,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : (isOtpMode ? _verifyOTP : handleLogin),
+                          onPressed: isLoading ? null : handleLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
@@ -627,7 +495,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-    otpController.dispose();
     super.dispose();
   }
 }

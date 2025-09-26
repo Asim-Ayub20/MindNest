@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
 import 'patient_onboarding_screen.dart';
 import 'therapist_onboarding_screen.dart';
+import 'email_verification_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   final String userType;
@@ -35,8 +36,8 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    if (passwordController.text.length < 6) {
-      _showMessage('Password must be at least 6 characters');
+    if (passwordController.text.length < 8) {
+      _showMessage('Password must be at least 8 characters');
       return;
     }
 
@@ -45,6 +46,91 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
+      // Check if user can signup using database function (if available)
+      try {
+        final signupCheck = await Supabase.instance.client.rpc(
+          'app_auth_check',
+          params: {
+            'user_email': emailController.text.trim(),
+            'check_type': 'signup',
+          },
+        );
+
+        print('Signup check result: $signupCheck'); // Debug log
+
+        if (signupCheck['allowed'] == false) {
+          setState(() {
+            isLoading = false;
+          });
+
+          final reason = signupCheck['reason'] as String;
+          if (reason == 'User already exists') {
+            final existingRole = signupCheck['existing_role'] as String;
+            final isVerified = signupCheck['is_verified'] as bool;
+
+            if (existingRole == widget.userType) {
+              if (isVerified) {
+                _showMessage(
+                  'This email is already registered. Please sign in instead.',
+                );
+              } else {
+                _showMessage(
+                  'Account exists but email is not verified. Please check your email or sign in to resend verification.',
+                );
+              }
+            } else {
+              _showMessage(
+                'This email is already registered as a $existingRole. Please use a different email or sign in with your existing account.',
+              );
+            }
+          } else {
+            _showMessage('Unable to create account: $reason');
+          }
+          return;
+        }
+      } catch (e) {
+        // If database check fails, try basic profile check as fallback
+        print('Database signup check failed, using fallback: $e');
+
+        try {
+          final existingProfiles = await Supabase.instance.client
+              .from('profiles')
+              .select('role, email, is_email_confirmed')
+              .eq('email', emailController.text.trim())
+              .limit(1);
+
+          if (existingProfiles.isNotEmpty) {
+            final existingRole = existingProfiles.first['role'];
+            final isVerified =
+                existingProfiles.first['is_email_confirmed'] ?? false;
+
+            setState(() {
+              isLoading = false;
+            });
+
+            if (existingRole == widget.userType) {
+              if (isVerified) {
+                _showMessage(
+                  'This email is already registered. Please sign in instead.',
+                );
+              } else {
+                _showMessage(
+                  'Account exists but email is not verified. Please check your email or sign in to resend verification.',
+                );
+              }
+            } else {
+              _showMessage(
+                'This email is already registered as a $existingRole. Please use a different email or sign in with your existing account.',
+              );
+            }
+            return;
+          }
+        } catch (profileError) {
+          print('Profile check also failed: $profileError');
+          // Continue with signup attempt
+        }
+      }
+
       final AuthResponse response = await Supabase.instance.client.auth.signUp(
         email: emailController.text.trim(),
         password: passwordController.text,
@@ -52,24 +138,43 @@ class _SignupScreenState extends State<SignupScreen> {
           'full_name': emailController.text.split('@')[0],
           'role': widget.userType,
         },
+        emailRedirectTo: 'io.supabase.mindnest://login-callback/',
       );
 
       if (response.user != null) {
-        _showMessage('Account created! Welcome to MindNest!', isError: false);
-        if (mounted) {
-          // Navigate to appropriate onboarding based on user type
-          if (widget.userType == 'patient') {
+        if (response.user!.emailConfirmedAt == null) {
+          _showMessage(
+            'Account created! Please check your email to verify your account.',
+            isError: false,
+          );
+          // Navigate to email verification screen
+          if (mounted) {
             Navigator.of(context).pushReplacement(
               CustomPageTransitions.slideFromRight<void>(
-                PatientOnboardingScreen(),
+                EmailVerificationScreen(
+                  email: emailController.text.trim(),
+                  userType: widget.userType,
+                ),
               ),
             );
-          } else {
-            Navigator.of(context).pushReplacement(
-              CustomPageTransitions.slideFromRight<void>(
-                TherapistOnboardingScreen(),
-              ),
-            );
+          }
+        } else {
+          _showMessage('Account created! Welcome to MindNest!', isError: false);
+          if (mounted) {
+            // Navigate to appropriate onboarding based on user type
+            if (widget.userType == 'patient') {
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  PatientOnboardingScreen(),
+                ),
+              );
+            } else {
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  TherapistOnboardingScreen(),
+                ),
+              );
+            }
           }
         }
       }
@@ -318,7 +423,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Password must be at least 6 characters',
+                                'Password must be at least 8 characters',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF1E40AF),

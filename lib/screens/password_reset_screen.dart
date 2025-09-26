@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Reset flow states
-enum ResetState { email, otp, newPassword }
+enum ResetState { email, otp, newPassword, tokenReset }
 
 class PasswordResetScreen extends StatefulWidget {
-  const PasswordResetScreen({super.key});
+  final bool isFromDeepLink;
+  final Session? resetSession;
+
+  const PasswordResetScreen({
+    super.key,
+    this.isFromDeepLink = false,
+    this.resetSession,
+  });
 
   @override
   State<PasswordResetScreen> createState() => _PasswordResetScreenState();
@@ -26,6 +33,16 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
   String userEmail = '';
   String maskedEmail = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // If opened from deep link, go directly to token reset
+    if (widget.isFromDeepLink && widget.resetSession != null) {
+      currentState = ResetState.tokenReset;
+      userEmail = widget.resetSession!.user.email ?? '';
+    }
+  }
 
   // Utility function to mask email
   String maskEmail(String email) {
@@ -62,9 +79,24 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     });
 
     try {
+      // Check if user exists first
+      final existingUser = await Supabase.instance.client
+          .from('profiles')
+          .select('email')
+          .eq('email', emailController.text.trim())
+          .limit(1);
+
+      if (existingUser.isEmpty) {
+        setState(() {
+          isLoading = false;
+        });
+        _showMessage('No account found with this email address');
+        return;
+      }
+
+      // Use resetPasswordForEmail - this will send an email with reset link/code
       await Supabase.instance.client.auth.resetPasswordForEmail(
         emailController.text.trim(),
-        redirectTo: 'mindnest://reset-password', // Deep link for mobile apps
       );
 
       setState(() {
@@ -74,7 +106,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
         isLoading = false;
       });
 
-      _showMessage('Password reset code sent to your email', isError: false);
+      _showMessage(
+        'Password reset instructions sent to your email. Please check your email for a reset code.',
+        isError: false,
+      );
     } on AuthException catch (error) {
       setState(() {
         isLoading = false;
@@ -114,13 +149,68 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     });
 
     try {
-      await Supabase.instance.client.auth.verifyOTP(
-        token: otpController.text.trim(),
-        type: OtpType.recovery,
-        email: userEmail,
-      );
+      // Verify the OTP for password recovery
+      final AuthResponse response = await Supabase.instance.client.auth
+          .verifyOTP(
+            token: otpController.text.trim(),
+            type: OtpType.recovery,
+            email: userEmail,
+          );
 
-      // Update password
+      if (response.user != null) {
+        // Now update the password
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(password: newPasswordController.text),
+        );
+
+        setState(() {
+          isLoading = false;
+        });
+
+        _showMessage('Password updated successfully!', isError: false);
+
+        // Navigate back to login after successful password reset
+        Future.delayed(Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        });
+      }
+    } on AuthException catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      _showMessage('Failed to reset password: ${error.message}');
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      _showMessage('An unexpected error occurred. Please try again.');
+    }
+  }
+
+  Future<void> resetPasswordWithToken() async {
+    if (newPasswordController.text.isEmpty) {
+      _showMessage('Please enter a new password');
+      return;
+    }
+
+    if (newPasswordController.text.length < 8) {
+      _showMessage('Password must be at least 8 characters long');
+      return;
+    }
+
+    if (newPasswordController.text != confirmPasswordController.text) {
+      _showMessage('Passwords do not match');
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Update the password using the session from the deep link
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: newPasswordController.text),
       );
@@ -131,10 +221,14 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
       _showMessage('Password updated successfully!', isError: false);
 
-      // Navigate back to login after successful password reset
+      // Sign out the user and navigate to login
+      await Supabase.instance.client.auth.signOut();
+
       Future.delayed(Duration(seconds: 2), () {
         if (mounted) {
-          Navigator.of(context).pop();
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/login', (route) => false);
         }
       });
     } on AuthException catch (error) {
@@ -476,6 +570,174 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     );
   }
 
+  Widget buildTokenResetStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Reset Your Password',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        SizedBox(height: 12),
+        Text(
+          'Enter your new password below. Make sure it\'s at least 8 characters long.',
+          style: TextStyle(fontSize: 16, color: Color(0xFF6B7280), height: 1.5),
+        ),
+        SizedBox(height: 40),
+
+        // New password field
+        Text(
+          'New Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Color(0xFFE5E7EB)),
+          ),
+          child: TextField(
+            controller: newPasswordController,
+            obscureText: !isNewPasswordVisible,
+            decoration: InputDecoration(
+              hintText: 'Enter new password (8+ characters)',
+              hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF9CA3AF)),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  isNewPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Color(0xFF9CA3AF),
+                ),
+                onPressed: () {
+                  setState(() {
+                    isNewPasswordVisible = !isNewPasswordVisible;
+                  });
+                },
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
+
+        // Confirm password field
+        Text(
+          'Confirm New Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Color(0xFFE5E7EB)),
+          ),
+          child: TextField(
+            controller: confirmPasswordController,
+            obscureText: !isConfirmPasswordVisible,
+            decoration: InputDecoration(
+              hintText: 'Confirm new password',
+              hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF9CA3AF)),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  isConfirmPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Color(0xFF9CA3AF),
+                ),
+                onPressed: () {
+                  setState(() {
+                    isConfirmPasswordVisible = !isConfirmPasswordVisible;
+                  });
+                },
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 32),
+
+        // Update password button
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: isLoading ? null : resetPasswordWithToken,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF8B7CF6),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              disabledBackgroundColor: Color(0xFFE5E7EB),
+            ),
+            child: isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    'Update Password',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+          ),
+        ),
+        SizedBox(height: 20),
+
+        // Security notice
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Color(0xFFF0F9FF),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Color(0xFFBAE6FD)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: Color(0xFF0369A1), size: 20),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'After updating your password, you\'ll be signed out and redirected to the login screen.',
+                  style: TextStyle(color: Color(0xFF0369A1), fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -494,63 +756,69 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Progress indicator
-              Container(
-                margin: EdgeInsets.only(bottom: 40),
-                child: Row(
-                  children: [
-                    // Step 1
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF8B7CF6),
-                        borderRadius: BorderRadius.circular(16),
+              // Progress indicator (hide for token reset flow)
+              if (currentState != ResetState.tokenReset)
+                Container(
+                  margin: EdgeInsets.only(bottom: 40),
+                  child: Row(
+                    children: [
+                      // Step 1
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF8B7CF6),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.email_outlined,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.email_outlined,
-                        color: Colors.white,
-                        size: 18,
+                      Expanded(
+                        child: Container(
+                          height: 2,
+                          margin: EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: currentState == ResetState.otp
+                                ? Color(0xFF8B7CF6)
+                                : Color(0xFFE5E7EB),
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        height: 2,
-                        margin: EdgeInsets.symmetric(horizontal: 8),
+                      // Step 2
+                      Container(
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
                           color: currentState == ResetState.otp
                               ? Color(0xFF8B7CF6)
                               : Color(0xFFE5E7EB),
-                          borderRadius: BorderRadius.circular(1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.lock_reset_outlined,
+                          color: currentState == ResetState.otp
+                              ? Colors.white
+                              : Color(0xFF9CA3AF),
+                          size: 18,
                         ),
                       ),
-                    ),
-                    // Step 2
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: currentState == ResetState.otp
-                            ? Color(0xFF8B7CF6)
-                            : Color(0xFFE5E7EB),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.lock_reset_outlined,
-                        color: currentState == ResetState.otp
-                            ? Colors.white
-                            : Color(0xFF9CA3AF),
-                        size: 18,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
               // Current step content
-              currentState == ResetState.email
-                  ? buildEmailStep()
-                  : buildOTPStep(),
+              if (currentState == ResetState.email)
+                buildEmailStep()
+              else if (currentState == ResetState.otp)
+                buildOTPStep()
+              else if (currentState == ResetState.tokenReset)
+                buildTokenResetStep()
+              else
+                buildEmailStep(),
             ],
           ),
         ),

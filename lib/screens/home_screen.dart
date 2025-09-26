@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'journal_screen.dart';
+import 'patient_chat_screen.dart';
+import 'therapist_chat_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -24,6 +26,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
+    final String? role = user?.userMetadata?['role'] as String?;
 
     return Scaffold(
       appBar: AppBar(
@@ -89,44 +92,66 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 40),
-            // Chat button for demo
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                      userType: 'patient', // or 'therapist', depending on user
-                      otherUserName: 'Dr. Smith',
-                      otherUserAvatarUrl:
-                          'https://randomuser.me/api/portraits/men/32.jpg',
+            // Show only the relevant chat button and journal for patients
+            if (role == 'patient') ...[
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => PatientChatScreen(
+                        therapistName: 'Dr. Smith',
+                        therapistAvatarUrl:
+                            'https://randomuser.me/api/portraits/men/32.jpg',
+                      ),
                     ),
-                  ),
-                );
-              },
-              icon: Icon(Icons.chat_bubble_outline),
-              label: Text('Open Chat'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                  );
+                },
+                icon: Icon(Icons.chat_bubble_outline),
+                label: Text('Chat with Therapist'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                ),
               ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => JournalScreen()),
-                );
-              },
-              icon: Icon(Icons.book_rounded),
-              label: Text('My Journal'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.deepPurple,
-                side: BorderSide(color: Colors.deepPurple, width: 1.2),
-                padding: EdgeInsets.symmetric(vertical: 16),
+              SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => JournalScreen()),
+                  );
+                },
+                icon: Icon(Icons.book_rounded),
+                label: Text('My Journal'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.deepPurple,
+                  side: BorderSide(color: Colors.deepPurple, width: 1.2),
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                ),
               ),
-            ),
+            ],
+            if (role == 'therapist')
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => TherapistChatScreen(
+                        patientName: 'John Doe',
+                        patientAvatarUrl:
+                            'https://randomuser.me/api/portraits/men/45.jpg',
+                      ),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.chat_bubble_outline),
+                label: Text('Chat with Patient'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[700],
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
             SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => handleLogout(context),

@@ -22,7 +22,7 @@ class _PatientOnboardingScreenState extends State<PatientOnboardingScreen> {
       description:
           "Connect with licensed therapists, track your mood, and access tools designed to support your mental health journey.",
       icon: Icons.favorite,
-      gradient: [Color(0xFF8B7CF6), Color(0xFF7C3AED)],
+      gradient: [Color(0xFF10B981), Color(0xFF059669)],
     ),
     OnboardingData(
       title: "Find Your Therapist",

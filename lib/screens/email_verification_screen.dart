@@ -76,7 +76,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: Color(0xFF8B7CF6),
+                        color: Color(0xFF10B981),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Icon(
@@ -114,7 +114,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                             text: widget.email,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF8B7CF6),
+                              color: Color(0xFF10B981),
                             ),
                           ),
                           TextSpan(
@@ -138,7 +138,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       child: ElevatedButton(
                         onPressed: isResending ? null : resendVerificationEmail,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF8B7CF6),
+                          backgroundColor: Color(0xFF10B981),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -189,7 +189,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 child: Text(
                   'Back to Sign In',
                   style: TextStyle(
-                    color: Color(0xFF8B7CF6),
+                    color: Color(0xFF10B981),
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),

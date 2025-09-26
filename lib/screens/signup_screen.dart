@@ -4,6 +4,7 @@ import '../utils/page_transitions.dart';
 import 'patient_onboarding_screen.dart';
 import 'therapist_onboarding_screen.dart';
 import 'email_verification_screen.dart';
+import '../utils/logo_widget.dart';
 
 class SignupScreen extends StatefulWidget {
   final String userType;
@@ -219,16 +220,8 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Column(
               children: [
                 SizedBox(height: MediaQuery.of(context).size.height * 0.06),
-                // Heart Icon with purple background
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF8B7CF6),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Icon(Icons.favorite, color: Colors.white, size: 40),
-                ),
+                // Logo with green background
+                LogoWidget(size: 80),
                 SizedBox(height: MediaQuery.of(context).size.height * 0.04),
 
                 // Welcome text
@@ -441,7 +434,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         height: 52,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Color(0xFF8B7CF6), Color(0xFF7C3AED)],
+                            colors: [Color(0xFF10B981), Color(0xFF059669)],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
@@ -497,7 +490,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF8B7CF6),
+                          color: Color(0xFF10B981),
                         ),
                       ),
                     ),

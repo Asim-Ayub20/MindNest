@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/page_transitions.dart';
 import 'signup_screen.dart';
+import '../utils/logo_widget.dart';
 
 class UserTypeSelectionScreen extends StatefulWidget {
   const UserTypeSelectionScreen({super.key});
@@ -85,20 +86,8 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
                   children: [
                     SizedBox(height: MediaQuery.of(context).size.height * 0.08),
 
-                    // Heart Icon with purple background
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF8B7CF6),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Icon(
-                        Icons.favorite,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                    ),
+                    // Logo with green background
+                    LogoWidget(size: 80),
                     SizedBox(height: MediaQuery.of(context).size.height * 0.05),
 
                     // Welcome text
@@ -128,7 +117,7 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
                           title: 'I need support',
                           subtitle: 'Connect with mental health professionals',
                           icon: Icons.person,
-                          gradient: [Color(0xFF8B7CF6), Color(0xFF7C3AED)],
+                          gradient: [Color(0xFF10B981), Color(0xFF059669)],
                           description:
                               'Access therapy sessions, track your mood, and get personalized mental health support.',
                         ),
@@ -158,7 +147,7 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
                         gradient: selectedUserType != null
                             ? LinearGradient(
                                 colors: selectedUserType == 'patient'
-                                    ? [Color(0xFF8B7CF6), Color(0xFF7C3AED)]
+                                    ? [Color(0xFF10B981), Color(0xFF059669)]
                                     : [Color(0xFF10B981), Color(0xFF059669)],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -214,7 +203,7 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF8B7CF6),
+                              color: Color(0xFF10B981),
                             ),
                           ),
                         ),

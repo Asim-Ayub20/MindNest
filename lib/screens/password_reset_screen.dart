@@ -317,7 +317,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           child: ElevatedButton(
             onPressed: isLoading ? null : sendPasswordReset,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF8B7CF6),
+              backgroundColor: Color(0xFF10B981),
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -370,7 +370,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                 text: maskedEmail,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF8B7CF6),
+                  color: Color(0xFF10B981),
                 ),
               ),
               TextSpan(text: '. Enter the code below to continue.'),
@@ -519,7 +519,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           child: ElevatedButton(
             onPressed: isLoading ? null : verifyOTPAndResetPassword,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF8B7CF6),
+              backgroundColor: Color(0xFF10B981),
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -560,7 +560,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             child: Text(
               'Didn\'t receive the code? Try again',
               style: TextStyle(
-                color: Color(0xFF8B7CF6),
+                color: Color(0xFF10B981),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -688,7 +688,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           child: ElevatedButton(
             onPressed: isLoading ? null : resetPasswordWithToken,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF8B7CF6),
+              backgroundColor: Color(0xFF10B981),
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -767,7 +767,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: Color(0xFF8B7CF6),
+                          color: Color(0xFF10B981),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(
@@ -782,7 +782,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                           margin: EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
                             color: currentState == ResetState.otp
-                                ? Color(0xFF8B7CF6)
+                                ? Color(0xFF10B981)
                                 : Color(0xFFE5E7EB),
                             borderRadius: BorderRadius.circular(1),
                           ),
@@ -794,7 +794,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                         height: 32,
                         decoration: BoxDecoration(
                           color: currentState == ResetState.otp
-                              ? Color(0xFF8B7CF6)
+                              ? Color(0xFF10B981)
                               : Color(0xFFE5E7EB),
                           borderRadius: BorderRadius.circular(16),
                         ),

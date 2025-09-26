@@ -193,9 +193,9 @@ class _MindNestAppState extends State<MindNestApp> {
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        primarySwatch: Colors.green,
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         // Performance optimizations
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),

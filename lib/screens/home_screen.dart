@@ -26,7 +26,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('MindNest Home'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF10B981),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -42,14 +42,14 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(Icons.psychology, size: 80, color: Colors.deepPurple),
+            Icon(Icons.psychology, size: 80, color: Color(0xFF10B981)),
             SizedBox(height: 24),
             Text(
               'Welcome to MindNest!',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
+                color: Color(0xFF10B981),
               ),
               textAlign: TextAlign.center,
             ),

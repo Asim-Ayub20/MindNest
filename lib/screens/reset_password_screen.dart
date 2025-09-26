@@ -168,7 +168,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: Color(0xFF8B7CF6),
+                    color: Color(0xFF10B981),
                     borderRadius: BorderRadius.circular(40),
                   ),
                   child: Icon(Icons.lock_reset, color: Colors.white, size: 40),
@@ -336,7 +336,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: ElevatedButton(
                   onPressed: isLoading ? null : _resetPassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF8B7CF6),
+                    backgroundColor: Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -374,7 +374,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   child: Text(
                     'Back to Sign In',
                     style: TextStyle(
-                      color: Color(0xFF8B7CF6),
+                      color: Color(0xFF10B981),
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                     ),

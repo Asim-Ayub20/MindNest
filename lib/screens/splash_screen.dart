@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 import '../utils/page_transitions.dart';
+import '../utils/logo_widget.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -33,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen>
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Color(0xFF6D28D9),
+        systemNavigationBarColor: Color(0xFF047857),
         systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
@@ -150,12 +151,12 @@ class _SplashScreenState extends State<SplashScreen>
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Color(0xFF6D28D9),
+        systemNavigationBarColor: Color(0xFF047857),
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Color(
-          0xFF6D28D9,
+          0xFF047857,
         ), // Set scaffold background to match gradient
         body: AnimatedBuilder(
           animation: _fadeController,
@@ -170,9 +171,9 @@ class _SplashScreenState extends State<SplashScreen>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Color(0xFF8B7CF6),
-                      Color(0xFF7C3AED),
-                      Color(0xFF6D28D9),
+                      Color(0xFF10B981),
+                      Color(0xFF059669),
+                      Color(0xFF047857),
                     ],
                   ),
                 ),
@@ -196,27 +197,13 @@ class _SplashScreenState extends State<SplashScreen>
                                           _heartController.isAnimating
                                       ? _heartPulseAnimation.value
                                       : 1.0),
-                              child: Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(30),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                      blurRadius: 20,
-                                      offset: Offset(0, 10),
-                                    ),
-                                  ],
+                              child: LogoWidget(
+                                size: 120,
+                                backgroundColor: Colors.white.withValues(
+                                  alpha: 0.2,
                                 ),
-                                child: Icon(
-                                  Icons.favorite,
-                                  color: Colors.white,
-                                  size: 60,
-                                ),
+                                borderRadius: 30,
+                                assetPath: 'assets/images/logo_large.png',
                               ),
                             );
                           },

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'chat_screen.dart';
+import 'journal_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -87,6 +89,45 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 40),
+            // Chat button for demo
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      userType: 'patient', // or 'therapist', depending on user
+                      otherUserName: 'Dr. Smith',
+                      otherUserAvatarUrl:
+                          'https://randomuser.me/api/portraits/men/32.jpg',
+                    ),
+                  ),
+                );
+              },
+              icon: Icon(Icons.chat_bubble_outline),
+              label: Text('Open Chat'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => JournalScreen()),
+                );
+              },
+              icon: Icon(Icons.book_rounded),
+              label: Text('My Journal'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.deepPurple,
+                side: BorderSide(color: Colors.deepPurple, width: 1.2),
+                padding: EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+            SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => handleLogout(context),
               icon: Icon(Icons.logout),

@@ -1,0 +1,914 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import '../utils/page_transitions.dart';
+import 'home_screen.dart';
+
+class TherapistDetailsScreen extends StatefulWidget {
+  const TherapistDetailsScreen({super.key});
+
+  @override
+  State<TherapistDetailsScreen> createState() => _TherapistDetailsScreenState();
+}
+
+class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
+
+  // Controllers
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _qualificationsController =
+      TextEditingController();
+  final TextEditingController _licenseIdController = TextEditingController();
+  final TextEditingController _experienceYearsController =
+      TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
+  final TextEditingController _consultationFeeController =
+      TextEditingController();
+
+  // Form values
+  String _selectedGender = '';
+  final List<String> _selectedSpecializations = [];
+  String _selectedAvailability = 'Weekdays (9 AM - 5 PM)';
+  File? _profileImage;
+
+  // UI state
+  bool _isSubmitting = false;
+
+  // Dropdown options
+  final List<String> _genderOptions = [
+    'Male',
+    'Female',
+    'Other',
+    'Prefer not to say',
+  ];
+
+  final List<String> _specializationOptions = [
+    'Anxiety Disorders',
+    'Depression',
+    'Child Therapy',
+    'Cognitive Behavioral Therapy (CBT)',
+    'Marriage & Family Therapy',
+    'Trauma Therapy',
+    'Addiction Counseling',
+    'Grief Counseling',
+    'Behavioral Therapy',
+    'Psychoanalysis',
+    'Group Therapy',
+    'Art Therapy',
+    'Other',
+  ];
+
+  final List<String> _availabilityOptions = [
+    'Weekdays (9 AM - 5 PM)',
+    'Weekends (10 AM - 4 PM)',
+    'Evenings (5 PM - 9 PM)',
+    'Flexible Hours',
+    'By Appointment Only',
+  ];
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _phoneController.dispose();
+    _locationController.dispose();
+    _qualificationsController.dispose();
+    _licenseIdController.dispose();
+    _experienceYearsController.dispose();
+    _bioController.dispose();
+    _consultationFeeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F7),
+      appBar: AppBar(
+        title: const Text('Professional Profile'),
+        backgroundColor: const Color(0xFF10B981),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Welcome message
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.psychology,
+                        size: 48,
+                        color: Color(0xFF10B981),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Complete Your Professional Profile',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F2937),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Help patients find the right therapist by sharing your professional background and expertise.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF6B7280),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Profile Picture Section
+                _buildProfilePictureSection(),
+                const SizedBox(height: 24),
+
+                // Personal Details Section
+                _buildSectionTitle('Personal Information'),
+                const SizedBox(height: 16),
+                _buildPersonalDetailsSection(),
+                const SizedBox(height: 24),
+
+                // Professional Details Section
+                _buildSectionTitle('Professional Information'),
+                const SizedBox(height: 16),
+                _buildProfessionalDetailsSection(),
+                const SizedBox(height: 24),
+
+                // Specialization Section
+                _buildSectionTitle('Specializations'),
+                const SizedBox(height: 16),
+                _buildSpecializationSection(),
+                const SizedBox(height: 24),
+
+                // Experience Section
+                _buildSectionTitle('Experience & Qualifications'),
+                const SizedBox(height: 16),
+                _buildExperienceSection(),
+                const SizedBox(height: 24),
+
+                // About Section
+                _buildSectionTitle('About You'),
+                const SizedBox(height: 16),
+                _buildAboutSection(),
+                const SizedBox(height: 24),
+
+                // Practice Details Section
+                _buildSectionTitle('Practice Details'),
+                const SizedBox(height: 16),
+                _buildPracticeDetailsSection(),
+                const SizedBox(height: 40),
+
+                // Submit Button
+                _buildSubmitButton(),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF1F2937),
+      ),
+    );
+  }
+
+  Widget _buildProfilePictureSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFF3F4F6),
+                border: Border.all(color: const Color(0xFF10B981), width: 3),
+              ),
+              child: _profileImage != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(60),
+                      child: Image.file(
+                        _profileImage!,
+                        fit: BoxFit.cover,
+                        width: 120,
+                        height: 120,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.add_a_photo,
+                      size: 40,
+                      color: Color(0xFF10B981),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _profileImage != null
+                ? 'Tap to change photo'
+                : 'Add Professional Photo (Optional)',
+            style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonalDetailsSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTextFormField(
+            controller: _fullNameController,
+            label: 'Full Name',
+            hintText: 'Dr. Your Full Name',
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Full name is required';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildGenderDropdown(),
+          const SizedBox(height: 20),
+          _buildTextFormField(
+            controller: _phoneController,
+            label: 'Phone Number',
+            hintText: 'Enter your contact number',
+            keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(15),
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Phone number is required';
+              }
+              if (value.length < 10) {
+                return 'Please enter a valid phone number';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildTextFormField(
+            controller: _locationController,
+            label: 'Location',
+            hintText: 'City, Country',
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Location is required';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfessionalDetailsSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildTextFormField(
+            controller: _licenseIdController,
+            label: 'License/Certification ID',
+            hintText: 'Enter your professional license number',
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'License ID is required';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildTextFormField(
+            controller: _experienceYearsController,
+            label: 'Years of Experience',
+            hintText: 'e.g., 5',
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(2),
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Experience years is required';
+              }
+              final years = int.tryParse(value);
+              if (years == null || years < 0) {
+                return 'Please enter a valid number of years';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpecializationSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Select Your Specializations',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF374151),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _specializationOptions.map((specialization) {
+              final isSelected = _selectedSpecializations.contains(
+                specialization,
+              );
+              return FilterChip(
+                label: Text(
+                  specialization,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isSelected ? Colors.white : const Color(0xFF374151),
+                  ),
+                ),
+                selected: isSelected,
+                onSelected: (bool selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedSpecializations.add(specialization);
+                    } else {
+                      _selectedSpecializations.remove(specialization);
+                    }
+                  });
+                },
+                selectedColor: const Color(0xFF10B981),
+                checkmarkColor: Colors.white,
+                backgroundColor: const Color(0xFFF3F4F6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              );
+            }).toList(),
+          ),
+          if (_selectedSpecializations.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'Please select at least one specialization',
+                style: TextStyle(fontSize: 12, color: Colors.red),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExperienceSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: _buildTextFormField(
+        controller: _qualificationsController,
+        label: 'Qualifications',
+        hintText: 'e.g., Ph.D. in Clinical Psychology, University of XYZ, 2015',
+        maxLines: 3,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Qualifications are required';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildAboutSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildTextFormField(
+            controller: _bioController,
+            label: 'Bio/About',
+            hintText:
+                'Tell patients about yourself, your approach to therapy...',
+            maxLines: 5,
+            inputFormatters: [LengthLimitingTextInputFormatter(500)],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Bio is required';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '${_bioController.text.length}/500',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPracticeDetailsSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildTextFormField(
+            controller: _consultationFeeController,
+            label: 'Consultation Fee (PKR)',
+            hintText: 'e.g., 2000',
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(6),
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Consultation fee is required';
+              }
+              final fee = int.tryParse(value);
+              if (fee == null || fee <= 0) {
+                return 'Please enter a valid fee amount';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildAvailabilityDropdown(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextFormField({
+    required TextEditingController controller,
+    required String label,
+    required String hintText,
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          maxLines: maxLines,
+          onChanged: (value) {
+            if (controller == _bioController) {
+              setState(() {
+                // Update character count
+              });
+            }
+          },
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: maxLines > 1 ? 16 : 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Gender',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: _selectedGender.isEmpty ? null : _selectedGender,
+          decoration: InputDecoration(
+            hintText: 'Select your gender',
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Gender is required';
+            }
+            return null;
+          },
+          items: _genderOptions.map((gender) {
+            return DropdownMenuItem<String>(value: gender, child: Text(gender));
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedGender = value ?? '';
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAvailabilityDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Availability',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: _selectedAvailability,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+          items: _availabilityOptions.map((availability) {
+            return DropdownMenuItem<String>(
+              value: availability,
+              child: Text(availability),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedAvailability = value ?? 'Weekdays (9 AM - 5 PM)';
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return ElevatedButton(
+      onPressed: _isSubmitting ? null : _submitForm,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF10B981),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+      ),
+      child: _isSubmitting
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          : const Text(
+              'Save & Continue',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (image != null) {
+        setState(() {
+          _profileImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      _showMessage('Error selecting image: $e');
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate() ||
+        _selectedSpecializations.isEmpty) {
+      if (_selectedSpecializations.isEmpty) {
+        _showMessage('Please select at least one specialization');
+      } else {
+        _showMessage('Please fill in all required fields');
+      }
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        _showMessage('User not authenticated');
+        return;
+      }
+
+      // Upload profile image if selected
+      String? profilePicUrl;
+      if (_profileImage != null) {
+        try {
+          profilePicUrl = await _uploadProfileImage(user.id);
+        } catch (e) {
+          debugPrint('Error uploading image: $e');
+          // Continue without image if upload fails
+        }
+      }
+
+      // Create therapists table entry
+      await _createTherapistRecord(user.id, profilePicUrl);
+
+      // Navigate to home screen
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          CustomPageTransitions.fadeTransition<void>(const HomeScreen()),
+          (route) => false,
+        );
+      }
+    } catch (error) {
+      _showMessage('Error saving profile: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  Future<String> _uploadProfileImage(String userId) async {
+    if (_profileImage == null) return '';
+
+    final fileName = 'therapist_profile_$userId.jpg';
+    final bytes = await _profileImage!.readAsBytes();
+
+    await Supabase.instance.client.storage
+        .from('therapist-profiles')
+        .uploadBinary(
+          fileName,
+          bytes,
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+        );
+
+    return Supabase.instance.client.storage
+        .from('therapist-profiles')
+        .getPublicUrl(fileName);
+  }
+
+  Future<void> _createTherapistRecord(
+    String userId,
+    String? profilePicUrl,
+  ) async {
+    await Supabase.instance.client.from('therapists').insert({
+      'id': userId,
+      'full_name': _fullNameController.text.trim(),
+      'gender': _selectedGender,
+      'phone': _phoneController.text.trim(),
+      'location': _locationController.text.trim(),
+      'specialization': _selectedSpecializations,
+      'qualifications': _qualificationsController.text.trim(),
+      'license_id': _licenseIdController.text.trim(),
+      'experience_years': int.parse(_experienceYearsController.text.trim()),
+      'bio': _bioController.text.trim(),
+      'consultation_fee': int.parse(_consultationFeeController.text.trim()),
+      'availability': {'schedule': _selectedAvailability},
+      'profile_pic_url': profilePicUrl,
+    });
+
+    // Update the profiles table with additional info
+    await Supabase.instance.client
+        .from('profiles')
+        .update({
+          'full_name': _fullNameController.text.trim(),
+          'phone_number': _phoneController.text.trim(),
+          'avatar_url': profilePicUrl,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', userId);
+  }
+
+  void _showMessage(String message, {bool isError = true}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+}

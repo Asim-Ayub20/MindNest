@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/page_transitions.dart';
 import '../models/onboarding_data.dart';
-import 'home_screen.dart';
+import 'therapist_details_screen.dart';
 
 class TherapistOnboardingScreen extends StatefulWidget {
   const TherapistOnboardingScreen({super.key});
@@ -71,9 +71,9 @@ class _TherapistOnboardingScreenState extends State<TherapistOnboardingScreen> {
   }
 
   void _completeOnboarding() {
-    Navigator.of(
-      context,
-    ).pushReplacement(CustomPageTransitions.fadeTransition<void>(HomeScreen()));
+    Navigator.of(context).pushReplacement(
+      CustomPageTransitions.fadeTransition<void>(TherapistDetailsScreen()),
+    );
   }
 
   @override

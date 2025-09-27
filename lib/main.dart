@@ -6,7 +6,9 @@ import 'screens/login_screen.dart';
 import 'screens/user_type_selection_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/patient_onboarding_screen.dart';
+import 'screens/patient_details_screen.dart';
 import 'screens/therapist_onboarding_screen.dart';
+import 'screens/therapist_details_screen.dart';
 import 'screens/password_reset_screen.dart';
 import 'utils/page_transitions.dart';
 
@@ -170,11 +172,54 @@ class _MindNestAppState extends State<MindNestApp> {
           );
         }
       } else {
+        // Check if patient needs to complete profile details
+        if (userRole == 'patient') {
+          final patientDetails = await Supabase.instance.client
+              .from('patients')
+              .select('id')
+              .eq('id', user.id)
+              .maybeSingle();
+
+          if (patientDetails == null) {
+            // Patient hasn't completed profile details, redirect to PatientDetailsScreen
+            if (context.mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                CustomPageTransitions.slideFromRight<void>(
+                  PatientDetailsScreen(),
+                ),
+                (route) => false,
+              );
+            }
+            return;
+          }
+        } else if (userRole == 'therapist') {
+          final therapistDetails = await Supabase.instance.client
+              .from('therapists')
+              .select('id')
+              .eq('id', user.id)
+              .maybeSingle();
+
+          if (therapistDetails == null) {
+            // Therapist hasn't completed profile details, redirect to TherapistDetailsScreen
+            if (context.mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                CustomPageTransitions.slideFromRight<void>(
+                  TherapistDetailsScreen(),
+                ),
+                (route) => false,
+              );
+            }
+            return;
+          }
+        }
+
         // Navigate to home screen
-        Navigator.of(context).pushAndRemoveUntil(
-          CustomPageTransitions.fadeTransition<void>(HomeScreen()),
-          (route) => false,
-        );
+        if (context.mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            CustomPageTransitions.fadeTransition<void>(HomeScreen()),
+            (route) => false,
+          );
+        }
       }
     } catch (e) {
       debugPrint('Error handling signed in user: $e');

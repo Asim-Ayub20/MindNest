@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/page_transitions.dart';
 import '../models/onboarding_data.dart';
-import 'home_screen.dart';
+import 'patient_details_screen.dart';
 
 class PatientOnboardingScreen extends StatefulWidget {
   const PatientOnboardingScreen({super.key});
@@ -71,9 +71,9 @@ class _PatientOnboardingScreenState extends State<PatientOnboardingScreen> {
   }
 
   void _completeOnboarding() {
-    Navigator.of(
-      context,
-    ).pushReplacement(CustomPageTransitions.fadeTransition<void>(HomeScreen()));
+    Navigator.of(context).pushReplacement(
+      CustomPageTransitions.fadeTransition<void>(PatientDetailsScreen()),
+    );
   }
 
   @override

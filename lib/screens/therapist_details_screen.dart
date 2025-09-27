@@ -43,6 +43,7 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
 
   // UI state
   bool _isSubmitting = false;
+  bool _isLoading = true;
 
   // Dropdown options
   final List<String> _genderOptions = [
@@ -77,6 +78,12 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadExistingData();
+  }
+
+  @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
@@ -89,6 +96,65 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
     super.dispose();
   }
 
+  Future<void> _loadExistingData() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Try to load existing therapist data
+      final existingData = await Supabase.instance.client
+          .from('therapists')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (existingData != null && mounted) {
+        setState(() {
+          _firstNameController.text = existingData['first_name'] ?? '';
+          _lastNameController.text = existingData['last_name'] ?? '';
+          _phoneController.text = existingData['phone'] ?? '';
+          _selectedGender = existingData['gender'] ?? '';
+          _selectedCountry = existingData['country'];
+          _selectedCity = existingData['city'];
+          _qualificationsController.text = existingData['qualifications'] ?? '';
+          _licenseIdController.text = existingData['license_id'] ?? '';
+          _experienceYearsController.text =
+              existingData['experience_years']?.toString() ?? '';
+          _bioController.text = existingData['bio'] ?? '';
+          _consultationFeeController.text =
+              existingData['consultation_fee']?.toString() ?? '';
+
+          // Parse specializations array
+          if (existingData['specialization'] != null) {
+            final List<dynamic> specializations =
+                existingData['specialization'];
+            _selectedSpecializations.clear();
+            _selectedSpecializations.addAll(specializations.cast<String>());
+          }
+
+          // Parse availability
+          if (existingData['availability'] != null &&
+              existingData['availability']['schedule'] != null) {
+            _selectedAvailability = existingData['availability']['schedule'];
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading existing data: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,107 +165,111 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Welcome message
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF10B981)),
+            )
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.psychology,
-                        size: 48,
-                        color: Color(0xFF10B981),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Complete Your Professional Profile',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                      // Welcome message
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Help patients find the right therapist by sharing your professional background and expertise.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF6B7280),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.psychology,
+                              size: 48,
+                              color: Color(0xFF10B981),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Complete Your Professional Profile',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1F2937),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Help patients find the right therapist by sharing your professional background and expertise.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF6B7280),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: 24),
+
+                      // Profile Picture Section
+                      _buildProfilePictureSection(),
+                      const SizedBox(height: 24),
+
+                      // Personal Details Section
+                      _buildSectionTitle('Personal Information'),
+                      const SizedBox(height: 16),
+                      _buildPersonalDetailsSection(),
+                      const SizedBox(height: 24),
+
+                      // Professional Details Section
+                      _buildSectionTitle('Professional Information'),
+                      const SizedBox(height: 16),
+                      _buildProfessionalDetailsSection(),
+                      const SizedBox(height: 24),
+
+                      // Specialization Section
+                      _buildSectionTitle('Specializations'),
+                      const SizedBox(height: 16),
+                      _buildSpecializationSection(),
+                      const SizedBox(height: 24),
+
+                      // Experience Section
+                      _buildSectionTitle('Experience & Qualifications'),
+                      const SizedBox(height: 16),
+                      _buildExperienceSection(),
+                      const SizedBox(height: 24),
+
+                      // About Section
+                      _buildSectionTitle('About You'),
+                      const SizedBox(height: 16),
+                      _buildAboutSection(),
+                      const SizedBox(height: 24),
+
+                      // Practice Details Section
+                      _buildSectionTitle('Practice Details'),
+                      const SizedBox(height: 16),
+                      _buildPracticeDetailsSection(),
+                      const SizedBox(height: 40),
+
+                      // Submit Button
+                      _buildSubmitButton(),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Profile Picture Section
-                _buildProfilePictureSection(),
-                const SizedBox(height: 24),
-
-                // Personal Details Section
-                _buildSectionTitle('Personal Information'),
-                const SizedBox(height: 16),
-                _buildPersonalDetailsSection(),
-                const SizedBox(height: 24),
-
-                // Professional Details Section
-                _buildSectionTitle('Professional Information'),
-                const SizedBox(height: 16),
-                _buildProfessionalDetailsSection(),
-                const SizedBox(height: 24),
-
-                // Specialization Section
-                _buildSectionTitle('Specializations'),
-                const SizedBox(height: 16),
-                _buildSpecializationSection(),
-                const SizedBox(height: 24),
-
-                // Experience Section
-                _buildSectionTitle('Experience & Qualifications'),
-                const SizedBox(height: 16),
-                _buildExperienceSection(),
-                const SizedBox(height: 24),
-
-                // About Section
-                _buildSectionTitle('About You'),
-                const SizedBox(height: 16),
-                _buildAboutSection(),
-                const SizedBox(height: 24),
-
-                // Practice Details Section
-                _buildSectionTitle('Practice Details'),
-                const SizedBox(height: 16),
-                _buildPracticeDetailsSection(),
-                const SizedBox(height: 40),
-
-                // Submit Button
-                _buildSubmitButton(),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -922,7 +992,7 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
         '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
     final location = '$_selectedCountry, $_selectedCity';
 
-    await Supabase.instance.client.from('therapists').insert({
+    await Supabase.instance.client.from('therapists').upsert({
       'id': userId,
       'first_name': _firstNameController.text.trim(),
       'last_name': _lastNameController.text.trim(),

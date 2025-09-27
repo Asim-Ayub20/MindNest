@@ -40,6 +40,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
   // UI state
   bool _isSubmitting = false;
+  bool _isLoading = true;
 
   // Dropdown options
   final List<String> _genderOptions = [
@@ -49,6 +50,12 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     'Prefer not to say',
   ];
   final List<String> _languageOptions = ['English', 'Urdu', 'Roman Urdu'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingData();
+  }
 
   @override
   void dispose() {
@@ -61,6 +68,60 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     super.dispose();
   }
 
+  Future<void> _loadExistingData() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Try to load existing patient data
+      final existingData = await Supabase.instance.client
+          .from('patients')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (existingData != null && mounted) {
+        setState(() {
+          _firstNameController.text = existingData['first_name'] ?? '';
+          _lastNameController.text = existingData['last_name'] ?? '';
+          _phoneController.text = existingData['phone'] ?? '';
+          _selectedGender = existingData['gender'] ?? '';
+          _selectedLanguage = existingData['preferred_lang'] ?? 'English';
+          _selectedCountry = existingData['country'];
+          _selectedCity = existingData['city'];
+          _emergencyFirstNameController.text =
+              existingData['emergency_first_name'] ?? '';
+          _emergencyLastNameController.text =
+              existingData['emergency_last_name'] ?? '';
+          _emergencyPhoneController.text =
+              existingData['emergency_phone'] ?? '';
+
+          // Parse date of birth
+          if (existingData['dob'] != null) {
+            try {
+              _dateOfBirth = DateTime.parse(existingData['dob']);
+            } catch (e) {
+              debugPrint('Error parsing date: $e');
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading existing data: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,95 +132,99 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Welcome message
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF10B981)),
+            )
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.person_add,
-                        size: 48,
-                        color: Color(0xFF10B981),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Welcome to MindNest!',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                      // Welcome message
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Let\'s complete your profile to personalize your experience and connect you with the right support.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF6B7280),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.person_add,
+                              size: 48,
+                              color: Color(0xFF10B981),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Welcome to MindNest!',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1F2937),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Let\'s complete your profile to personalize your experience and connect you with the right support.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF6B7280),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: 24),
+
+                      // Profile Picture Section
+                      _buildProfilePictureSection(),
+                      const SizedBox(height: 24),
+
+                      // Personal Details Section
+                      _buildSectionTitle('Personal Details'),
+                      const SizedBox(height: 16),
+                      _buildPersonalDetailsSection(),
+                      const SizedBox(height: 24),
+
+                      // Contact Information Section
+                      _buildSectionTitle('Contact Information'),
+                      const SizedBox(height: 16),
+                      _buildContactSection(),
+                      const SizedBox(height: 24),
+
+                      // Preferences Section
+                      _buildSectionTitle('Preferences'),
+                      const SizedBox(height: 16),
+                      _buildPreferencesSection(),
+                      const SizedBox(height: 24),
+
+                      // Emergency Contact Section
+                      _buildSectionTitle('Emergency Contact'),
+                      const SizedBox(height: 16),
+                      _buildEmergencyContactSection(),
+                      const SizedBox(height: 40),
+
+                      // Submit Button
+                      _buildSubmitButton(),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Profile Picture Section
-                _buildProfilePictureSection(),
-                const SizedBox(height: 24),
-
-                // Personal Details Section
-                _buildSectionTitle('Personal Details'),
-                const SizedBox(height: 16),
-                _buildPersonalDetailsSection(),
-                const SizedBox(height: 24),
-
-                // Contact Information Section
-                _buildSectionTitle('Contact Information'),
-                const SizedBox(height: 16),
-                _buildContactSection(),
-                const SizedBox(height: 24),
-
-                // Preferences Section
-                _buildSectionTitle('Preferences'),
-                const SizedBox(height: 16),
-                _buildPreferencesSection(),
-                const SizedBox(height: 24),
-
-                // Emergency Contact Section
-                _buildSectionTitle('Emergency Contact'),
-                const SizedBox(height: 16),
-                _buildEmergencyContactSection(),
-                const SizedBox(height: 40),
-
-                // Submit Button
-                _buildSubmitButton(),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -683,7 +748,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         '${_emergencyFirstNameController.text.trim()} ${_emergencyLastNameController.text.trim()}';
     final location = '$_selectedCountry, $_selectedCity';
 
-    await Supabase.instance.client.from('patients').insert({
+    await Supabase.instance.client.from('patients').upsert({
       'id': userId,
       'first_name': _firstNameController.text.trim(),
       'last_name': _lastNameController.text.trim(),

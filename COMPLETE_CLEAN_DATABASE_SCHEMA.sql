@@ -166,63 +166,6 @@ CREATE TABLE public.password_resets (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Patients details table (extends profiles for patient-specific info)
-CREATE TABLE public.patients (
-    -- Primary identifiers
-    id UUID REFERENCES public.profiles(id) ON DELETE CASCADE PRIMARY KEY,
-    
-    -- Personal details
-    full_name TEXT NOT NULL,
-    dob DATE NOT NULL,
-    gender TEXT NOT NULL CHECK (gender IN ('Male', 'Female', 'Other', 'Prefer not to say')),
-    phone TEXT NOT NULL,
-    location TEXT NOT NULL,
-    preferred_lang TEXT NOT NULL DEFAULT 'English' CHECK (preferred_lang IN ('English', 'Urdu', 'Roman Urdu')),
-    
-    -- Emergency contact
-    emergency_name TEXT NOT NULL,
-    emergency_phone TEXT NOT NULL,
-    
-    -- Profile picture
-    profile_pic_url TEXT,
-    
-    -- Timestamps
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Therapists details table (extends profiles for therapist-specific info)
-CREATE TABLE public.therapists (
-    -- Primary identifiers
-    id UUID REFERENCES public.profiles(id) ON DELETE CASCADE PRIMARY KEY,
-    
-    -- Personal details
-    full_name TEXT NOT NULL,
-    gender TEXT NOT NULL CHECK (gender IN ('Male', 'Female', 'Other', 'Prefer not to say')),
-    phone TEXT NOT NULL,
-    location TEXT NOT NULL,
-    
-    -- Professional details
-    specialization TEXT[] NOT NULL,
-    qualifications TEXT NOT NULL,
-    license_id TEXT NOT NULL,
-    experience_years INTEGER NOT NULL CHECK (experience_years >= 0),
-    bio TEXT NOT NULL,
-    consultation_fee DECIMAL(10,2) NOT NULL CHECK (consultation_fee > 0),
-    availability JSONB NOT NULL DEFAULT '{"schedule": "Weekdays (9 AM - 5 PM)"}',
-    
-    -- Profile picture
-    profile_pic_url TEXT,
-    
-    -- Status and verification
-    is_verified BOOLEAN DEFAULT FALSE,
-    verification_date TIMESTAMPTZ,
-    
-    -- Timestamps
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- ============================================================================
 -- STEP 3: Create Indexes for Performance
 -- ============================================================================
@@ -251,23 +194,6 @@ CREATE INDEX idx_auth_logs_success ON public.auth_logs(success);
 CREATE INDEX idx_password_resets_email ON public.password_resets(email);
 CREATE INDEX idx_password_resets_created_at ON public.password_resets(created_at);
 
--- Patients indexes
-CREATE INDEX idx_patients_id ON public.patients(id);
-CREATE INDEX idx_patients_phone ON public.patients(phone);
-CREATE INDEX idx_patients_location ON public.patients(location);
-CREATE INDEX idx_patients_gender ON public.patients(gender);
-CREATE INDEX idx_patients_created_at ON public.patients(created_at);
-
--- Therapists indexes
-CREATE INDEX idx_therapists_id ON public.therapists(id);
-CREATE INDEX idx_therapists_phone ON public.therapists(phone);
-CREATE INDEX idx_therapists_location ON public.therapists(location);
-CREATE INDEX idx_therapists_specialization ON public.therapists USING GIN (specialization);
-CREATE INDEX idx_therapists_experience ON public.therapists(experience_years);
-CREATE INDEX idx_therapists_fee ON public.therapists(consultation_fee);
-CREATE INDEX idx_therapists_verified ON public.therapists(is_verified);
-CREATE INDEX idx_therapists_created_at ON public.therapists(created_at);
-
 -- ============================================================================
 -- STEP 4: Create Updated Timestamp Function
 -- ============================================================================
@@ -288,14 +214,6 @@ CREATE TRIGGER update_profiles_updated_at
 
 CREATE TRIGGER update_onboarding_updated_at 
     BEFORE UPDATE ON public.user_onboarding 
-    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-CREATE TRIGGER update_patients_updated_at 
-    BEFORE UPDATE ON public.patients 
-    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-CREATE TRIGGER update_therapists_updated_at 
-    BEFORE UPDATE ON public.therapists 
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ============================================================================
@@ -802,8 +720,6 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_onboarding ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.auth_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.password_resets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.therapists ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Users can view own profile" ON public.profiles
@@ -833,29 +749,6 @@ CREATE POLICY "Users can view own auth logs" ON public.auth_logs
 CREATE POLICY "Users can view own password resets" ON public.password_resets
     FOR SELECT USING (auth.uid() = user_id);
 
--- Patients policies
-CREATE POLICY "Patients can view own details" ON public.patients
-    FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Patients can insert own details" ON public.patients
-    FOR INSERT WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Patients can update own details" ON public.patients
-    FOR UPDATE USING (auth.uid() = id);
-
--- Therapists policies
-CREATE POLICY "Therapists can view own details" ON public.therapists
-    FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Therapists can insert own details" ON public.therapists
-    FOR INSERT WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Therapists can update own details" ON public.therapists
-    FOR UPDATE USING (auth.uid() = id);
-
-CREATE POLICY "Public can view verified therapists" ON public.therapists
-    FOR SELECT USING (is_verified = true);
-
 -- ============================================================================
 -- STEP 9: Grant Permissions
 -- ============================================================================
@@ -866,8 +759,6 @@ GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.user_onboarding TO authenticated;
 GRANT SELECT, INSERT ON public.auth_logs TO authenticated;
 GRANT SELECT, INSERT ON public.password_resets TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON public.patients TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON public.therapists TO authenticated;
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION public.app_auth_check(TEXT, TEXT) TO authenticated;
@@ -877,47 +768,7 @@ GRANT EXECUTE ON FUNCTION public.get_user_profile(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_onboarding_progress(UUID, TEXT, BOOLEAN, JSONB) TO authenticated;
 
 -- ============================================================================
--- STEP 10: Create Storage Buckets
--- ============================================================================
-
--- Create storage bucket for patient profile pictures
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('patient-profiles', 'patient-profiles', true)
-ON CONFLICT (id) DO NOTHING;
-
--- Create storage bucket for therapist profile pictures
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('therapist-profiles', 'therapist-profiles', true)
-ON CONFLICT (id) DO NOTHING;
-
--- Create RLS policy for patient-profiles bucket
-CREATE POLICY "Users can upload own profile picture"
-ON storage.objects FOR INSERT 
-WITH CHECK (bucket_id = 'patient-profiles' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Users can view profile pictures"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'patient-profiles');
-
-CREATE POLICY "Users can update own profile picture"
-ON storage.objects FOR UPDATE
-USING (bucket_id = 'patient-profiles' AND auth.uid()::text = (storage.foldername(name))[1]);
-
--- Create RLS policies for therapist-profiles bucket
-CREATE POLICY "Therapists can upload own profile picture"
-ON storage.objects FOR INSERT 
-WITH CHECK (bucket_id = 'therapist-profiles' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Users can view therapist profile pictures"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'therapist-profiles');
-
-CREATE POLICY "Therapists can update own profile picture"
-ON storage.objects FOR UPDATE
-USING (bucket_id = 'therapist-profiles' AND auth.uid()::text = (storage.foldername(name))[1]);
-
--- ============================================================================
--- STEP 11: Verification and Testing
+-- STEP 10: Verification and Testing
 -- ============================================================================
 
 -- Test the auth check function
@@ -929,7 +780,7 @@ SELECT public.app_auth_check('test@example.com', 'login') as login_test;
 SELECT 'Tables created:' as status, COUNT(*) as table_count
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
-AND table_name IN ('profiles', 'user_onboarding', 'auth_logs', 'password_resets', 'patients', 'therapists');
+AND table_name IN ('profiles', 'user_onboarding', 'auth_logs', 'password_resets');
 
 -- Verify functions were created
 SELECT 'Functions created:' as status, COUNT(*) as function_count

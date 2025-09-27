@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/page_transitions.dart';
+import '../utils/input_validators.dart';
+import '../widgets/custom_input_fields.dart';
+import '../widgets/location_selector.dart';
 import 'home_screen.dart';
 
 class TherapistDetailsScreen extends StatefulWidget {
@@ -18,9 +21,9 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
   final ImagePicker _picker = ImagePicker();
 
   // Controllers
-  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _qualificationsController =
       TextEditingController();
   final TextEditingController _licenseIdController = TextEditingController();
@@ -35,6 +38,8 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
   final List<String> _selectedSpecializations = [];
   String _selectedAvailability = 'Weekdays (9 AM - 5 PM)';
   File? _profileImage;
+  String? _selectedCountry;
+  String? _selectedCity;
 
   // UI state
   bool _isSubmitting = false;
@@ -73,9 +78,9 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
-    _locationController.dispose();
     _qualificationsController.dispose();
     _licenseIdController.dispose();
     _experienceYearsController.dispose();
@@ -281,47 +286,38 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextFormField(
-            controller: _fullNameController,
-            label: 'Full Name',
-            hintText: 'Dr. Your Full Name',
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Full name is required';
-              }
-              return null;
-            },
+          NameInputField(
+            controller: _firstNameController,
+            label: 'First Name',
+            hintText: 'Enter your first name',
+          ),
+          const SizedBox(height: 20),
+          NameInputField(
+            controller: _lastNameController,
+            label: 'Last Name',
+            hintText: 'Enter your last name',
           ),
           const SizedBox(height: 20),
           _buildGenderDropdown(),
           const SizedBox(height: 20),
-          _buildTextFormField(
+          PhoneInputField(
             controller: _phoneController,
             label: 'Phone Number',
             hintText: 'Enter your contact number',
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(15),
-            ],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Phone number is required';
-              }
-              if (value.length < 10) {
-                return 'Please enter a valid phone number';
-              }
-              return null;
-            },
           ),
           const SizedBox(height: 20),
-          _buildTextFormField(
-            controller: _locationController,
-            label: 'Location',
-            hintText: 'City, Country',
+          LocationSelector(
+            initialCountry: _selectedCountry,
+            initialCity: _selectedCity,
+            onLocationChanged: (country, city) {
+              setState(() {
+                _selectedCountry = country;
+                _selectedCity = city;
+              });
+            },
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Location is required';
+              if (_selectedCountry == null || _selectedCity == null) {
+                return 'Please select both country and city';
               }
               return null;
             },
@@ -347,37 +343,70 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
       ),
       child: Column(
         children: [
-          _buildTextFormField(
-            controller: _licenseIdController,
-            label: 'License/Certification ID',
-            hintText: 'Enter your professional license number',
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'License ID is required';
-              }
-              return null;
-            },
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'License/Certification ID *',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF374151),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _licenseIdController,
+                validator: (value) => InputValidators.validateLicenseId(value),
+                inputFormatters: [
+                  InputFormatters.licenseFormatter,
+                  LengthLimitingTextInputFormatter(20),
+                ],
+                decoration: InputDecoration(
+                  hintText: 'Enter your professional license number',
+                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF10B981),
+                      width: 2,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
-          _buildTextFormField(
+          NumberInputField(
             controller: _experienceYearsController,
             label: 'Years of Experience',
             hintText: 'e.g., 5',
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(2),
-            ],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Experience years is required';
-              }
-              final years = int.tryParse(value);
-              if (years == null || years < 0) {
-                return 'Please enter a valid number of years';
-              }
-              return null;
-            },
+            maxLength: 2,
+            suffixText: 'years',
+            validator: (value) =>
+                InputValidators.validateExperienceYears(value),
           ),
         ],
       ),
@@ -471,17 +500,67 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
           ),
         ],
       ),
-      child: _buildTextFormField(
-        controller: _qualificationsController,
-        label: 'Qualifications',
-        hintText: 'e.g., Ph.D. in Clinical Psychology, University of XYZ, 2015',
-        maxLines: 3,
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Qualifications are required';
-          }
-          return null;
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Qualifications *',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF374151),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _qualificationsController,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Qualifications are required';
+              }
+              if (value.trim().length < 10) {
+                return 'Please provide more detailed qualifications (at least 10 characters)';
+              }
+              return null;
+            },
+            maxLines: 3,
+            inputFormatters: [LengthLimitingTextInputFormatter(300)],
+            decoration: InputDecoration(
+              hintText:
+                  'e.g., Ph.D. in Clinical Psychology, University of XYZ, 2015',
+              hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+              filled: true,
+              fillColor: const Color(0xFFF9FAFB),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF10B981),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.red),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -502,19 +581,64 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
       ),
       child: Column(
         children: [
-          _buildTextFormField(
-            controller: _bioController,
-            label: 'Bio/About',
-            hintText:
-                'Tell patients about yourself, your approach to therapy...',
-            maxLines: 5,
-            inputFormatters: [LengthLimitingTextInputFormatter(500)],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Bio is required';
-              }
-              return null;
-            },
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Bio/About *',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF374151),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _bioController,
+                validator: (value) => InputValidators.validateBio(value),
+                maxLines: 5,
+                onChanged: (value) {
+                  setState(() {
+                    // Update character count
+                  });
+                },
+                inputFormatters: [LengthLimitingTextInputFormatter(500)],
+                decoration: InputDecoration(
+                  hintText:
+                      'Tell patients about yourself, your approach to therapy...',
+                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF10B981),
+                      width: 2,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Align(
@@ -545,99 +669,19 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
       ),
       child: Column(
         children: [
-          _buildTextFormField(
+          NumberInputField(
             controller: _consultationFeeController,
-            label: 'Consultation Fee (PKR)',
+            label: 'Consultation Fee',
             hintText: 'e.g., 2000',
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(6),
-            ],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Consultation fee is required';
-              }
-              final fee = int.tryParse(value);
-              if (fee == null || fee <= 0) {
-                return 'Please enter a valid fee amount';
-              }
-              return null;
-            },
+            maxLength: 6,
+            suffixText: 'PKR',
+            validator: (value) =>
+                InputValidators.validateConsultationFee(value),
           ),
           const SizedBox(height: 20),
           _buildAvailabilityDropdown(),
         ],
       ),
-    );
-  }
-
-  Widget _buildTextFormField({
-    required TextEditingController controller,
-    required String label,
-    required String hintText,
-    String? Function(String?)? validator,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          maxLines: maxLines,
-          onChanged: (value) {
-            if (controller == _bioController) {
-              setState(() {
-                // Update character count
-              });
-            }
-          },
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 2),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: maxLines > 1 ? 16 : 12,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -795,9 +839,13 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate() ||
-        _selectedSpecializations.isEmpty) {
+        _selectedSpecializations.isEmpty ||
+        _selectedCountry == null ||
+        _selectedCity == null) {
       if (_selectedSpecializations.isEmpty) {
         _showMessage('Please select at least one specialization');
+      } else if (_selectedCountry == null || _selectedCity == null) {
+        _showMessage('Please select both country and city');
       } else {
         _showMessage('Please fill in all required fields');
       }
@@ -870,12 +918,20 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
     String userId,
     String? profilePicUrl,
   ) async {
+    final fullName =
+        '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
+    final location = '$_selectedCountry, $_selectedCity';
+
     await Supabase.instance.client.from('therapists').insert({
       'id': userId,
-      'full_name': _fullNameController.text.trim(),
+      'first_name': _firstNameController.text.trim(),
+      'last_name': _lastNameController.text.trim(),
+      'full_name': fullName,
       'gender': _selectedGender,
       'phone': _phoneController.text.trim(),
-      'location': _locationController.text.trim(),
+      'country': _selectedCountry,
+      'city': _selectedCity,
+      'location': location,
       'specialization': _selectedSpecializations,
       'qualifications': _qualificationsController.text.trim(),
       'license_id': _licenseIdController.text.trim(),
@@ -890,7 +946,7 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
     await Supabase.instance.client
         .from('profiles')
         .update({
-          'full_name': _fullNameController.text.trim(),
+          'full_name': fullName,
           'phone_number': _phoneController.text.trim(),
           'avatar_url': profilePicUrl,
           'updated_at': DateTime.now().toIso8601String(),

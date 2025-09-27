@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../utils/page_transitions.dart';
+import '../widgets/custom_input_fields.dart';
+import '../widgets/location_selector.dart';
 import 'home_screen.dart';
 
 class PatientDetailsScreen extends StatefulWidget {
@@ -19,10 +20,12 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   final ImagePicker _picker = ImagePicker();
 
   // Controllers
-  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _emergencyNameController =
+  final TextEditingController _emergencyFirstNameController =
+      TextEditingController();
+  final TextEditingController _emergencyLastNameController =
       TextEditingController();
   final TextEditingController _emergencyPhoneController =
       TextEditingController();
@@ -32,6 +35,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   String _selectedGender = '';
   String _selectedLanguage = 'English';
   File? _profileImage;
+  String? _selectedCountry;
+  String? _selectedCity;
 
   // UI state
   bool _isSubmitting = false;
@@ -47,10 +52,11 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
-    _locationController.dispose();
-    _emergencyNameController.dispose();
+    _emergencyFirstNameController.dispose();
+    _emergencyLastNameController.dispose();
     _emergencyPhoneController.dispose();
     super.dispose();
   }
@@ -240,16 +246,16 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextFormField(
-            controller: _fullNameController,
-            label: 'Full Name',
-            hintText: 'Enter your full name',
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Full name is required';
-              }
-              return null;
-            },
+          NameInputField(
+            controller: _firstNameController,
+            label: 'First Name',
+            hintText: 'Enter your first name',
+          ),
+          const SizedBox(height: 20),
+          NameInputField(
+            controller: _lastNameController,
+            label: 'Last Name',
+            hintText: 'Enter your last name',
           ),
           const SizedBox(height: 20),
           _buildDateField(),
@@ -276,33 +282,24 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
       ),
       child: Column(
         children: [
-          _buildTextFormField(
+          PhoneInputField(
             controller: _phoneController,
             label: 'Phone Number',
             hintText: 'Enter your phone number',
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(15),
-            ],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Phone number is required';
-              }
-              if (value.length < 10) {
-                return 'Please enter a valid phone number';
-              }
-              return null;
-            },
           ),
           const SizedBox(height: 20),
-          _buildTextFormField(
-            controller: _locationController,
-            label: 'Location',
-            hintText: 'Enter your city/country',
+          LocationSelector(
+            initialCountry: _selectedCountry,
+            initialCity: _selectedCity,
+            onLocationChanged: (country, city) {
+              setState(() {
+                _selectedCountry = country;
+                _selectedCity = city;
+              });
+            },
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Location is required';
+              if (_selectedCountry == null || _selectedCity == null) {
+                return 'Please select both country and city';
               }
               return null;
             },
@@ -346,99 +343,25 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
       ),
       child: Column(
         children: [
-          _buildTextFormField(
-            controller: _emergencyNameController,
-            label: 'Emergency Contact Name',
-            hintText: 'Enter emergency contact name',
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Emergency contact name is required';
-              }
-              return null;
-            },
+          NameInputField(
+            controller: _emergencyFirstNameController,
+            label: 'Emergency Contact First Name',
+            hintText: 'Enter emergency contact first name',
           ),
           const SizedBox(height: 20),
-          _buildTextFormField(
+          NameInputField(
+            controller: _emergencyLastNameController,
+            label: 'Emergency Contact Last Name',
+            hintText: 'Enter emergency contact last name',
+          ),
+          const SizedBox(height: 20),
+          PhoneInputField(
             controller: _emergencyPhoneController,
             label: 'Emergency Contact Phone',
             hintText: 'Enter emergency contact phone',
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(15),
-            ],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Emergency contact phone is required';
-              }
-              if (value.length < 10) {
-                return 'Please enter a valid phone number';
-              }
-              return null;
-            },
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTextFormField({
-    required TextEditingController controller,
-    required String label,
-    required String hintText,
-    String? Function(String?)? validator,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -680,7 +603,10 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate() || _dateOfBirth == null) {
+    if (!_formKey.currentState!.validate() ||
+        _dateOfBirth == null ||
+        _selectedCountry == null ||
+        _selectedCity == null) {
       _showMessage('Please fill in all required fields');
       return;
     }
@@ -751,15 +677,27 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     String userId,
     String? profilePicUrl,
   ) async {
+    final fullName =
+        '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
+    final emergencyName =
+        '${_emergencyFirstNameController.text.trim()} ${_emergencyLastNameController.text.trim()}';
+    final location = '$_selectedCountry, $_selectedCity';
+
     await Supabase.instance.client.from('patients').insert({
       'id': userId,
-      'full_name': _fullNameController.text.trim(),
+      'first_name': _firstNameController.text.trim(),
+      'last_name': _lastNameController.text.trim(),
+      'full_name': fullName,
       'dob': _dateOfBirth!.toIso8601String().split('T')[0], // Format as date
       'gender': _selectedGender,
       'phone': _phoneController.text.trim(),
-      'location': _locationController.text.trim(),
+      'country': _selectedCountry,
+      'city': _selectedCity,
+      'location': location,
       'preferred_lang': _selectedLanguage,
-      'emergency_name': _emergencyNameController.text.trim(),
+      'emergency_first_name': _emergencyFirstNameController.text.trim(),
+      'emergency_last_name': _emergencyLastNameController.text.trim(),
+      'emergency_name': emergencyName,
       'emergency_phone': _emergencyPhoneController.text.trim(),
       'profile_pic_url': profilePicUrl,
     });
@@ -768,7 +706,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     await Supabase.instance.client
         .from('profiles')
         .update({
-          'full_name': _fullNameController.text.trim(),
+          'full_name': fullName,
           'phone_number': _phoneController.text.trim(),
           'date_of_birth': _dateOfBirth!.toIso8601String().split('T')[0],
           'avatar_url': profilePicUrl,

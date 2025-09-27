@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:app_links/app_links.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/user_type_selection_screen.dart';
@@ -10,6 +11,7 @@ import 'screens/patient_details_screen.dart';
 import 'screens/therapist_onboarding_screen.dart';
 import 'screens/therapist_details_screen.dart';
 import 'screens/password_reset_screen.dart';
+import 'screens/email_verification_success_screen.dart';
 import 'utils/page_transitions.dart';
 
 // Global navigator key for handling navigation from anywhere
@@ -52,48 +54,110 @@ class MindNestApp extends StatefulWidget {
 }
 
 class _MindNestAppState extends State<MindNestApp> {
+  late AppLinks _appLinks;
+
   @override
   void initState() {
     super.initState();
     _setupAuthListener();
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // Handle deep links when app is already running
+    _appLinks.uriLinkStream.listen(
+      (uri) {
+        debugPrint('Deep link received while app running: $uri');
+        _handleDeepLink(uri);
+      },
+      onError: (err) {
+        debugPrint('Deep link error: $err');
+      },
+    );
+
+    // Handle deep links when app is launched from link
+    try {
+      final uri = await _appLinks.getInitialLink();
+      if (uri != null) {
+        debugPrint('App launched from deep link: $uri');
+        // Delay handling to ensure app is fully initialized
+        Future.delayed(Duration(milliseconds: 500), () {
+          _handleDeepLink(uri);
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to get initial link: $e');
+    }
+  }
+
+  void _handleDeepLink(Uri uri) {
+    debugPrint('Handling deep link: $uri');
+
+    if (uri.scheme == 'io.supabase.mindnest') {
+      if (uri.host == 'login-callback') {
+        // This is handled automatically by Supabase
+        debugPrint('Email verification link detected');
+      } else if (uri.host == 'reset-password') {
+        // This is handled by the auth listener
+        debugPrint('Password reset link detected');
+      }
+    }
   }
 
   void _setupAuthListener() {
     // Listen for authentication state changes and handle navigation
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      final AuthChangeEvent event = data.event;
-      final Session? session = data.session;
+    Supabase.instance.client.auth.onAuthStateChange.listen(
+      (data) async {
+        final AuthChangeEvent event = data.event;
+        final Session? session = data.session;
 
-      debugPrint('Auth event: $event');
+        debugPrint('Auth event: $event');
 
-      switch (event) {
-        case AuthChangeEvent.signedIn:
-          if (session != null) {
-            debugPrint('User signed in: ${session.user.email}');
+        switch (event) {
+          case AuthChangeEvent.signedIn:
+            if (session != null) {
+              debugPrint('User signed in: ${session.user.email}');
+              debugPrint(
+                'Email confirmed: ${session.user.emailConfirmedAt != null}',
+              );
+
+              // Handle email verification and onboarding navigation
+              await _handleSignedInUser(session);
+            }
+            break;
+          case AuthChangeEvent.signedOut:
+            debugPrint('User signed out');
+            break;
+          case AuthChangeEvent.passwordRecovery:
             debugPrint(
-              'Email confirmed: ${session.user.emailConfirmedAt != null}',
+              'Password recovery link clicked - user will be redirected to reset form',
             );
-
-            // Handle email verification and onboarding navigation
-            await _handleSignedInUser(session);
+            await _handlePasswordRecovery(session);
+            break;
+          case AuthChangeEvent.tokenRefreshed:
+            debugPrint('Token refreshed');
+            break;
+          default:
+            debugPrint('Other auth event: $event');
+        }
+      },
+      onError: (error) {
+        debugPrint('Auth state change error: $error');
+        // Handle auth errors, particularly expired verification links
+        if (error is AuthException) {
+          if (error.statusCode == 'otp_expired' ||
+              error.message.contains('expired')) {
+            debugPrint(
+              'Verification link expired - user should request new link',
+            );
+            // The user will need to request a new verification email
+            // from the EmailVerificationScreen
           }
-          break;
-        case AuthChangeEvent.signedOut:
-          debugPrint('User signed out');
-          break;
-        case AuthChangeEvent.passwordRecovery:
-          debugPrint(
-            'Password recovery link clicked - user will be redirected to reset form',
-          );
-          await _handlePasswordRecovery(session);
-          break;
-        case AuthChangeEvent.tokenRefreshed:
-          debugPrint('Token refreshed');
-          break;
-        default:
-          debugPrint('Other auth event: $event');
-      }
-    });
+        }
+      },
+    );
   }
 
   Future<void> _handlePasswordRecovery(Session? session) async {
@@ -132,7 +196,7 @@ class _MindNestAppState extends State<MindNestApp> {
           .eq('id', user.id)
           .single();
 
-      final userRole = profile['role'] as String?;
+      final userRole = profile['role'] as String? ?? 'patient';
       final userStatus = profile['status'] as String?;
 
       debugPrint('User profile: role=$userRole, status=$userStatus');
@@ -150,6 +214,61 @@ class _MindNestAppState extends State<MindNestApp> {
 
       final progressPercentage =
           onboarding?['progress_percentage'] as int? ?? 0;
+
+      // Get current route to determine the navigation context
+      final currentRoute = ModalRoute.of(context)?.settings.name;
+
+      // Check if this is a new user who just verified their email
+      // This should only happen when:
+      // 1. User has 0% onboarding progress (completely new)
+      // 2. User is coming from a deep link (email verification)
+      // 3. The current route is null or '/' (not from login screen)
+      final isNewUserFromEmailVerification =
+          progressPercentage == 0 &&
+          (currentRoute == null || currentRoute == '/') &&
+          user.emailConfirmedAt != null;
+
+      // Only show email verification success for truly new users from email verification
+      // Not for existing users logging in from the login screen
+      if (isNewUserFromEmailVerification) {
+        // Double-check this is really a new user by checking if they have any profile data
+        try {
+          final hasPatientData = userRole == 'patient'
+              ? await Supabase.instance.client
+                    .from('patients')
+                    .select('id')
+                    .eq('id', user.id)
+                    .maybeSingle()
+              : null;
+
+          final hasTherapistData = userRole == 'therapist'
+              ? await Supabase.instance.client
+                    .from('therapists')
+                    .select('id')
+                    .eq('id', user.id)
+                    .maybeSingle()
+              : null;
+
+          // If user has no profile data and no onboarding progress, they're truly new
+          if (hasPatientData == null && hasTherapistData == null) {
+            debugPrint(
+              'New user from email verification - showing success screen',
+            );
+            Navigator.of(context).pushAndRemoveUntil(
+              CustomPageTransitions.slideFromRight<void>(
+                EmailVerificationSuccessScreen(
+                  email: user.email ?? '',
+                  userType: userRole,
+                ),
+              ),
+              (route) => false,
+            );
+            return;
+          }
+        } catch (e) {
+          debugPrint('Error checking user profile data: $e');
+        }
+      }
 
       // Check if context is still mounted before navigation
       if (!context.mounted) return;

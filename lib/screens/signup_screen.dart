@@ -47,100 +47,23 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      // Check if user can signup using database function (if available)
-      try {
-        final signupCheck = await Supabase.instance.client.rpc(
-          'app_auth_check',
-          params: {
-            'user_email': emailController.text.trim(),
-            'check_type': 'signup',
-          },
-        );
+      // Skip complex validation and go straight to signup for better performance
+      // Let Supabase handle duplicate email validation
+      debugPrint('Starting optimized signup process');
 
-        debugPrint('Signup check result: $signupCheck'); // Debug log
+      final AuthResponse response = await Supabase.instance.client.auth
+          .signUp(
+            email: emailController.text.trim(),
+            password: passwordController.text,
+            data: {
+              'full_name': emailController.text.split('@')[0],
+              'role': widget.userType,
+            },
+            emailRedirectTo: 'io.supabase.mindnest://login-callback/',
+          )
+          .timeout(Duration(seconds: 15)); // Add timeout
 
-        if (signupCheck['allowed'] == false) {
-          setState(() {
-            isLoading = false;
-          });
-
-          final reason = signupCheck['reason'] as String;
-          if (reason == 'User already exists') {
-            final existingRole = signupCheck['existing_role'] as String;
-            final isVerified = signupCheck['is_verified'] as bool;
-
-            if (existingRole == widget.userType) {
-              if (isVerified) {
-                _showMessage(
-                  'This email is already registered. Please sign in instead.',
-                );
-              } else {
-                _showMessage(
-                  'Account exists but email is not verified. Please check your email or sign in to resend verification.',
-                );
-              }
-            } else {
-              _showMessage(
-                'This email is already registered as a $existingRole. Please use a different email or sign in with your existing account.',
-              );
-            }
-          } else {
-            _showMessage('Unable to create account: $reason');
-          }
-          return;
-        }
-      } catch (e) {
-        // If database check fails, try basic profile check as fallback
-        debugPrint('Database signup check failed, using fallback: $e');
-
-        try {
-          final existingProfiles = await Supabase.instance.client
-              .from('profiles')
-              .select('role, email, is_email_confirmed')
-              .eq('email', emailController.text.trim())
-              .limit(1);
-
-          if (existingProfiles.isNotEmpty) {
-            final existingRole = existingProfiles.first['role'];
-            final isVerified =
-                existingProfiles.first['is_email_confirmed'] ?? false;
-
-            setState(() {
-              isLoading = false;
-            });
-
-            if (existingRole == widget.userType) {
-              if (isVerified) {
-                _showMessage(
-                  'This email is already registered. Please sign in instead.',
-                );
-              } else {
-                _showMessage(
-                  'Account exists but email is not verified. Please check your email or sign in to resend verification.',
-                );
-              }
-            } else {
-              _showMessage(
-                'This email is already registered as a $existingRole. Please use a different email or sign in with your existing account.',
-              );
-            }
-            return;
-          }
-        } catch (profileError) {
-          debugPrint('Profile check also failed: $profileError');
-          // Continue with signup attempt
-        }
-      }
-
-      final AuthResponse response = await Supabase.instance.client.auth.signUp(
-        email: emailController.text.trim(),
-        password: passwordController.text,
-        data: {
-          'full_name': emailController.text.split('@')[0],
-          'role': widget.userType,
-        },
-        emailRedirectTo: 'io.supabase.mindnest://login-callback/',
-      );
+      debugPrint('Signup response received: ${response.user?.email}');
 
       if (response.user != null) {
         if (response.user!.emailConfirmedAt == null) {
@@ -180,9 +103,19 @@ class _SignupScreenState extends State<SignupScreen> {
         }
       }
     } on AuthException catch (error) {
-      _showMessage('Signup failed: ${error.message}');
+      debugPrint('AuthException during signup: ${error.message}');
+      if (error.message.contains('already registered')) {
+        _showMessage(
+          'This email is already registered. Please sign in instead.',
+        );
+      } else {
+        _showMessage('Signup failed: ${error.message}');
+      }
     } catch (error) {
-      _showMessage('An unexpected error occurred');
+      debugPrint('Unexpected error during signup: $error');
+      _showMessage(
+        'Network error. Please check your connection and try again.',
+      );
     } finally {
       setState(() {
         isLoading = false;

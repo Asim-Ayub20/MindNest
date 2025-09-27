@@ -57,7 +57,7 @@ class _SignupScreenState extends State<SignupScreen> {
           },
         );
 
-        print('Signup check result: $signupCheck'); // Debug log
+        debugPrint('Signup check result: $signupCheck'); // Debug log
 
         if (signupCheck['allowed'] == false) {
           setState(() {
@@ -91,7 +91,7 @@ class _SignupScreenState extends State<SignupScreen> {
         }
       } catch (e) {
         // If database check fails, try basic profile check as fallback
-        print('Database signup check failed, using fallback: $e');
+        debugPrint('Database signup check failed, using fallback: $e');
 
         try {
           final existingProfiles = await Supabase.instance.client
@@ -127,7 +127,7 @@ class _SignupScreenState extends State<SignupScreen> {
             return;
           }
         } catch (profileError) {
-          print('Profile check also failed: $profileError');
+          debugPrint('Profile check also failed: $profileError');
           // Continue with signup attempt
         }
       }

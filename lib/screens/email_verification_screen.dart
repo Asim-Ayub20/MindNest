@@ -132,7 +132,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     SizedBox(height: 40),
 
                     // Resend email button
-                    Container(
+                    SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(

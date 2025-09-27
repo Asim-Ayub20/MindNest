@@ -41,7 +41,7 @@ class _SimplePasswordResetScreenState extends State<SimplePasswordResetScreen> {
           },
         );
 
-        print('Password reset check result: $resetCheck'); // Debug log
+        debugPrint('Password reset check result: $resetCheck'); // Debug log
 
         if (resetCheck['allowed'] == false) {
           setState(() {
@@ -61,7 +61,7 @@ class _SimplePasswordResetScreenState extends State<SimplePasswordResetScreen> {
           return;
         }
       } catch (e) {
-        print('Database reset check failed: $e');
+        debugPrint('Database reset check failed: $e');
         // Continue with reset attempt even if check fails
       }
 
@@ -82,7 +82,7 @@ class _SimplePasswordResetScreenState extends State<SimplePasswordResetScreen> {
           },
         );
       } catch (e) {
-        print('Failed to log password reset request: $e');
+        debugPrint('Failed to log password reset request: $e');
         // Continue anyway
       }
 

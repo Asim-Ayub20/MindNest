@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
           },
         );
 
-        print('Login check result: $loginCheck'); // Debug log
+        debugPrint('Login check result: $loginCheck'); // Debug log
 
         if (loginCheck['allowed'] == false) {
           final reason = loginCheck['reason'] as String;
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         }
       } catch (e) {
-        print('Database login check failed: $e');
+        debugPrint('Database login check failed: $e');
         // Continue with login attempt even if check fails
       }
 
@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         } catch (e) {
           // Continue even if logging fails
-          print('Login logging failed: $e');
+          debugPrint('Login logging failed: $e');
         }
 
         // Don't navigate here - let the auth listener handle it

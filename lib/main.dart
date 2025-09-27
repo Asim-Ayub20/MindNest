@@ -149,6 +149,9 @@ class _MindNestAppState extends State<MindNestApp> {
       final progressPercentage =
           onboarding?['progress_percentage'] as int? ?? 0;
 
+      // Check if context is still mounted before navigation
+      if (!context.mounted) return;
+
       if (progressPercentage < 100) {
         // Navigate to appropriate onboarding screen
         if (userRole == 'patient') {

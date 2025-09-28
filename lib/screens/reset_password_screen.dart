@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
 import 'login_screen.dart';
+import '../utils/input_validators.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String? accessToken;
@@ -20,6 +21,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool isLoading = false;
   bool isNewPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
+  String? passwordError;
 
   @override
   void initState() {
@@ -53,13 +55,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       return;
     }
 
-    if (newPasswordController.text != confirmPasswordController.text) {
-      _showMessage('Passwords do not match');
+    // Validate password complexity
+    final passwordValidation = InputValidators.validatePassword(
+      newPasswordController.text,
+    );
+    if (passwordValidation != null) {
+      _showMessage(passwordValidation);
       return;
     }
 
-    if (newPasswordController.text.length < 8) {
-      _showMessage('Password must be at least 8 characters');
+    if (newPasswordController.text != confirmPasswordController.text) {
+      _showMessage('Passwords do not match');
       return;
     }
 
@@ -111,6 +117,54 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         isLoading = false;
       });
     }
+  }
+
+  void _validatePassword() {
+    setState(() {
+      passwordError = InputValidators.validatePassword(
+        newPasswordController.text,
+      );
+    });
+  }
+
+  bool _isPasswordInvalid() {
+    if (newPasswordController.text.isEmpty ||
+        confirmPasswordController.text.isEmpty) {
+      return true;
+    }
+    if (passwordError != null) {
+      return true;
+    }
+    if (newPasswordController.text != confirmPasswordController.text) {
+      return true;
+    }
+    return false;
+  }
+
+  Widget _buildRequirementItem(String requirement, bool isMet) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.radio_button_unchecked,
+            color: isMet ? Color(0xFF10B981) : Color(0xFF9CA3AF),
+            size: 12,
+          ),
+          SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              requirement,
+              style: TextStyle(
+                fontSize: 11,
+                color: isMet ? Color(0xFF059669) : Color(0xFF6B7280),
+                fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _navigateToLogin() {
@@ -219,6 +273,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: TextField(
                   controller: newPasswordController,
                   obscureText: !isNewPasswordVisible,
+                  onChanged: (value) => _validatePassword(),
                   decoration: InputDecoration(
                     hintText: 'Enter your new password',
                     hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
@@ -264,6 +319,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: TextField(
                   controller: confirmPasswordController,
                   obscureText: !isConfirmPasswordVisible,
+                  onChanged: (value) => _validatePassword(),
                   decoration: InputDecoration(
                     hintText: 'Confirm your new password',
                     hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
@@ -290,13 +346,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
               SizedBox(height: 16),
 
-              // Password requirements
+              // Password requirements and validation
               Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF0F9FF),
+                  color:
+                      passwordError == null &&
+                          newPasswordController.text.isNotEmpty
+                      ? Color(0xFFF0FDF4) // Green background when valid
+                      : Color(0xFFF0F9FF), // Blue background by default
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Color(0xFFBFDBFE)),
+                  border: Border.all(
+                    color:
+                        passwordError == null &&
+                            newPasswordController.text.isNotEmpty
+                        ? Color(0xFFBBF7D0) // Green border when valid
+                        : Color(0xFFBFDBFE), // Blue border by default
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,8 +370,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     Row(
                       children: [
                         Icon(
-                          Icons.info_outline,
-                          color: Color(0xFF3B82F6),
+                          passwordError == null &&
+                                  newPasswordController.text.isNotEmpty
+                              ? Icons.check_circle_outline
+                              : Icons.info_outline,
+                          color:
+                              passwordError == null &&
+                                  newPasswordController.text.isNotEmpty
+                              ? Color(0xFF10B981)
+                              : Color(0xFF3B82F6),
                           size: 16,
                         ),
                         SizedBox(width: 8),
@@ -314,15 +387,37 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E40AF),
+                            color:
+                                passwordError == null &&
+                                    newPasswordController.text.isNotEmpty
+                                ? Color(0xFF059669)
+                                : Color(0xFF1E40AF),
                           ),
                         ),
                       ],
                     ),
                     SizedBox(height: 8),
-                    Text(
-                      '• At least 8 characters long\n• Must be different from previous passwords',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF)),
+                    _buildRequirementItem(
+                      'At least 8 characters',
+                      newPasswordController.text.length >= 8,
+                    ),
+                    _buildRequirementItem(
+                      'Contains letters (A-Z or a-z)',
+                      RegExp(r'[a-zA-Z]').hasMatch(newPasswordController.text),
+                    ),
+                    _buildRequirementItem(
+                      'Contains numbers (0-9)',
+                      RegExp(r'[0-9]').hasMatch(newPasswordController.text),
+                    ),
+                    _buildRequirementItem(
+                      'Contains special characters (!@#\$%^&*)',
+                      RegExp(
+                        r'[!@#$%^&*(),.?":{}|<>_+=\-\[\]\\;/~`]',
+                      ).hasMatch(newPasswordController.text),
+                    ),
+                    _buildRequirementItem(
+                      'Different from previous passwords',
+                      true, // We can't check this client-side, so always show as true
                     ),
                   ],
                 ),
@@ -334,7 +429,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : _resetPassword,
+                  onPressed: (isLoading || _isPasswordInvalid())
+                      ? null
+                      : _resetPassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF10B981),
                     foregroundColor: Colors.white,

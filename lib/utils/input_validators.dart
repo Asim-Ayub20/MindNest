@@ -176,6 +176,77 @@ class InputValidators {
     return null;
   }
 
+  // Password validation - comprehensive security requirements
+  static String? validatePassword(
+    String? value, {
+    String fieldName = 'Password',
+  }) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+
+    final password = value.trim();
+
+    // Check minimum length
+    if (password.length < 8) {
+      return '$fieldName must be at least 8 characters long';
+    }
+
+    // Check for at least one letter (uppercase or lowercase)
+    if (!RegExp(r'[a-zA-Z]').hasMatch(password)) {
+      return '$fieldName must contain at least one letter';
+    }
+
+    // Check for at least one number
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return '$fieldName must contain at least one number';
+    }
+
+    // Check for at least one special character
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>_+=\-\[\]\\;/~`]').hasMatch(password)) {
+      return '$fieldName must contain at least one special character (!@#\$%^&*(),.?":{}|<>_+=\\-\\[\\]\\\\;/~`)';
+    }
+
+    return null;
+  }
+
+  // Password strength indicator (returns 0-4)
+  static int getPasswordStrength(String? password) {
+    if (password == null || password.isEmpty) return 0;
+
+    int strength = 0;
+
+    // Length check
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+
+    // Character variety checks
+    if (RegExp(r'[a-z]').hasMatch(password)) strength++;
+    if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
+    if (RegExp(r'[0-9]').hasMatch(password)) strength++;
+    if (RegExp(r'[!@#$%^&*(),.?":{}|<>_+=\-\[\]\\;/~`]').hasMatch(password))
+      strength++;
+
+    return strength > 4 ? 4 : strength;
+  }
+
+  // Password strength description
+  static String getPasswordStrengthDescription(int strength) {
+    switch (strength) {
+      case 0:
+      case 1:
+        return 'Very Weak';
+      case 2:
+        return 'Weak';
+      case 3:
+        return 'Fair';
+      case 4:
+        return 'Strong';
+      default:
+        return 'Very Weak';
+    }
+  }
+
   // Generic required field validation
   static String? validateRequired(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
@@ -222,6 +293,12 @@ class InputFormatters {
   // Numbers only formatter
   static final TextInputFormatter numbersOnlyFormatter =
       FilteringTextInputFormatter.digitsOnly;
+
+  // Password formatter - allow common password characters
+  static final TextInputFormatter passwordFormatter =
+      FilteringTextInputFormatter.allow(
+        RegExp(r'[a-zA-Z0-9!@#$%^&*(),.?":{}|<>_+=\-\[\]\\;/~`]'),
+      );
 
   // Capitalize first letter of each word
   static final TextInputFormatter capitalizeWordsFormatter =

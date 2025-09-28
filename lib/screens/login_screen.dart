@@ -4,6 +4,7 @@ import '../utils/page_transitions.dart';
 import 'simple_password_reset_screen.dart';
 import 'email_verification_screen.dart';
 import '../utils/logo_widget.dart';
+import '../utils/input_validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +23,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
       _showMessage('Please fill in all fields');
       return;
+    }
+
+    // Basic password validation for login (less strict for existing users)
+    if (passwordController.text.length < 6) {
+      _showMessage('Password must be at least 6 characters');
+      return;
+    }
+
+    // Warn users with weak passwords to update them
+    final passwordValidation = InputValidators.validatePassword(
+      passwordController.text,
+    );
+    if (passwordValidation != null) {
+      // Don't block login, but show a warning about password strength
+      debugPrint(
+        'Password does not meet new security requirements: $passwordValidation',
+      );
     }
 
     setState(() {

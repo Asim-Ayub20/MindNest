@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/input_validators.dart';
 
 // Reset flow states
 enum ResetState { email, otp, newPassword, tokenReset }
@@ -28,6 +29,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   bool isLoading = false;
   bool isNewPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
+  String? passwordError;
 
   ResetState currentState = ResetState.email;
 
@@ -59,6 +61,40 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     } else {
       return '${username.substring(0, 3)}***@$domain';
     }
+  }
+
+  void _validatePassword() {
+    setState(() {
+      passwordError = InputValidators.validatePassword(
+        newPasswordController.text,
+      );
+    });
+  }
+
+  Widget _buildRequirementItem(String requirement, bool isMet) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.radio_button_unchecked,
+            color: isMet ? Color(0xFF10B981) : Color(0xFF9CA3AF),
+            size: 12,
+          ),
+          SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              requirement,
+              style: TextStyle(
+                fontSize: 11,
+                color: isMet ? Color(0xFF059669) : Color(0xFF6B7280),
+                fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> sendPasswordReset() async {
@@ -439,6 +475,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           child: TextField(
             controller: newPasswordController,
             obscureText: !isNewPasswordVisible,
+            onChanged: (_) => _validatePassword(),
             decoration: InputDecoration(
               hintText: 'Enter new password',
               hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
@@ -464,6 +501,61 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             ),
           ),
         ),
+
+        // Password requirements visual feedback
+        if (newPasswordController.text.isNotEmpty)
+          Container(
+            margin: EdgeInsets.only(top: 8),
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: passwordError == null
+                  ? Color(0xFFF0FDF4)
+                  : Color(0xFFFEF2F2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: passwordError == null
+                    ? Color(0xFFD1FAE5)
+                    : Color(0xFFFECACA),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Password Requirements',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+                SizedBox(height: 8),
+                _buildRequirementItem(
+                  'At least 8 characters',
+                  newPasswordController.text.length >= 8,
+                ),
+                _buildRequirementItem(
+                  'Contains uppercase letter',
+                  RegExp(r'[A-Z]').hasMatch(newPasswordController.text),
+                ),
+                _buildRequirementItem(
+                  'Contains lowercase letter',
+                  RegExp(r'[a-z]').hasMatch(newPasswordController.text),
+                ),
+                _buildRequirementItem(
+                  'Contains number',
+                  RegExp(r'\d').hasMatch(newPasswordController.text),
+                ),
+                _buildRequirementItem(
+                  'Contains special character',
+                  RegExp(
+                    r'[!@#$%^&*(),.?":{}|<>]',
+                  ).hasMatch(newPasswordController.text),
+                ),
+              ],
+            ),
+          ),
+
         SizedBox(height: 16),
 
         // Confirm password field
@@ -608,6 +700,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           child: TextField(
             controller: newPasswordController,
             obscureText: !isNewPasswordVisible,
+            onChanged: (_) => _validatePassword(),
             decoration: InputDecoration(
               hintText: 'Enter new password (8+ characters)',
               hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
@@ -633,6 +726,61 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             ),
           ),
         ),
+
+        // Password requirements visual feedback
+        if (newPasswordController.text.isNotEmpty)
+          Container(
+            margin: EdgeInsets.only(top: 8),
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: passwordError == null
+                  ? Color(0xFFF0FDF4)
+                  : Color(0xFFFEF2F2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: passwordError == null
+                    ? Color(0xFFD1FAE5)
+                    : Color(0xFFFECACA),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Password Requirements',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+                SizedBox(height: 8),
+                _buildRequirementItem(
+                  'At least 8 characters',
+                  newPasswordController.text.length >= 8,
+                ),
+                _buildRequirementItem(
+                  'Contains uppercase letter',
+                  RegExp(r'[A-Z]').hasMatch(newPasswordController.text),
+                ),
+                _buildRequirementItem(
+                  'Contains lowercase letter',
+                  RegExp(r'[a-z]').hasMatch(newPasswordController.text),
+                ),
+                _buildRequirementItem(
+                  'Contains number',
+                  RegExp(r'\d').hasMatch(newPasswordController.text),
+                ),
+                _buildRequirementItem(
+                  'Contains special character',
+                  RegExp(
+                    r'[!@#$%^&*(),.?":{}|<>]',
+                  ).hasMatch(newPasswordController.text),
+                ),
+              ],
+            ),
+          ),
+
         SizedBox(height: 16),
 
         // Confirm password field

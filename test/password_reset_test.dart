@@ -51,15 +51,44 @@ void main() {
     });
 
     test('Password validation works correctly', () {
-      // Test password requirements
+      // Test password requirements: 8+ chars, letters, numbers, special chars
       bool isValidPassword(String password) {
-        return password.length >= 6;
+        if (password.length < 8) return false;
+        if (!RegExp(r'[a-zA-Z]').hasMatch(password)) return false;
+        if (!RegExp(r'[0-9]').hasMatch(password)) return false;
+        if (!RegExp(
+          r'[!@#$%^&*(),.?":{}|<>_+=\-\[\]\\;/~`]',
+        ).hasMatch(password))
+          return false;
+        return true;
       }
 
-      expect(isValidPassword('123456'), isTrue);
-      expect(isValidPassword('password123'), isTrue);
-      expect(isValidPassword('12345'), isFalse);
-      expect(isValidPassword(''), isFalse);
+      // Valid passwords
+      expect(isValidPassword('Password123!'), isTrue);
+      expect(isValidPassword('Secure@2024'), isTrue);
+      expect(isValidPassword('MyPass1#'), isTrue);
+      expect(
+        isValidPassword('password123!'),
+        isTrue,
+      ); // Lowercase letters are valid
+      expect(
+        isValidPassword('PASSWORD123!'),
+        isTrue,
+      ); // Uppercase letters are valid
+
+      // Invalid passwords
+      expect(isValidPassword('12345'), isFalse); // Too short
+      expect(isValidPassword(''), isFalse); // Empty
+      expect(
+        isValidPassword('password'),
+        isFalse,
+      ); // No numbers or special chars
+      expect(
+        isValidPassword('Password'),
+        isFalse,
+      ); // No numbers or special chars
+      expect(isValidPassword('Password123'), isFalse); // No special chars
+      expect(isValidPassword('1234567!'), isFalse); // No letters
     });
 
     test('Password matching validation works correctly', () {

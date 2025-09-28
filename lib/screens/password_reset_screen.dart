@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../utils/input_validators.dart';
+import '../widgets/shared_password_input.dart';
 
 // Reset flow states
 enum ResetState { email, otp, newPassword, tokenReset }
@@ -19,7 +19,8 @@ class PasswordResetScreen extends StatefulWidget {
   State<PasswordResetScreen> createState() => _PasswordResetScreenState();
 }
 
-class _PasswordResetScreenState extends State<PasswordResetScreen> {
+class _PasswordResetScreenState extends State<PasswordResetScreen>
+    with SharedPasswordMixin {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
@@ -29,7 +30,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   bool isLoading = false;
   bool isNewPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
-  String? passwordError;
 
   ResetState currentState = ResetState.email;
 
@@ -61,40 +61,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     } else {
       return '${username.substring(0, 3)}***@$domain';
     }
-  }
-
-  void _validatePassword() {
-    setState(() {
-      passwordError = InputValidators.validatePassword(
-        newPasswordController.text,
-      );
-    });
-  }
-
-  Widget _buildRequirementItem(String requirement, bool isMet) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Icon(
-            isMet ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isMet ? Color(0xFF10B981) : Color(0xFF9CA3AF),
-            size: 12,
-          ),
-          SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              requirement,
-              style: TextStyle(
-                fontSize: 11,
-                color: isMet ? Color(0xFF059669) : Color(0xFF6B7280),
-                fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> sendPasswordReset() async {
@@ -165,18 +131,15 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       return;
     }
 
-    if (newPasswordController.text.isEmpty) {
-      _showMessage('Please enter a new password');
-      return;
-    }
+    // Use shared password validation
+    final passwordValidationError =
+        SharedPasswordValidator.validatePasswordComplete(
+          newPasswordController.text,
+          confirmPasswordController.text,
+        );
 
-    if (newPasswordController.text.length < 6) {
-      _showMessage('Password must be at least 6 characters long');
-      return;
-    }
-
-    if (newPasswordController.text != confirmPasswordController.text) {
-      _showMessage('Passwords do not match');
+    if (passwordValidationError != null) {
+      _showMessage(passwordValidationError);
       return;
     }
 
@@ -226,18 +189,15 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   }
 
   Future<void> resetPasswordWithToken() async {
-    if (newPasswordController.text.isEmpty) {
-      _showMessage('Please enter a new password');
-      return;
-    }
+    // Use shared password validation
+    final passwordValidationError =
+        SharedPasswordValidator.validatePasswordComplete(
+          newPasswordController.text,
+          confirmPasswordController.text,
+        );
 
-    if (newPasswordController.text.length < 8) {
-      _showMessage('Password must be at least 8 characters long');
-      return;
-    }
-
-    if (newPasswordController.text != confirmPasswordController.text) {
-      _showMessage('Passwords do not match');
+    if (passwordValidationError != null) {
+      _showMessage(passwordValidationError);
       return;
     }
 
@@ -456,151 +416,27 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
         ),
         SizedBox(height: 24),
 
-        // New password field
-        Text(
-          'New Password',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFE5E7EB)),
-          ),
-          child: TextField(
-            controller: newPasswordController,
-            obscureText: !isNewPasswordVisible,
-            onChanged: (_) => _validatePassword(),
-            decoration: InputDecoration(
-              hintText: 'Enter new password',
-              hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF9CA3AF)),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  isNewPasswordVisible
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: Color(0xFF9CA3AF),
-                ),
-                onPressed: () {
-                  setState(() {
-                    isNewPasswordVisible = !isNewPasswordVisible;
-                  });
-                },
-              ),
-            ),
-          ),
-        ),
-
-        // Password requirements visual feedback
-        if (newPasswordController.text.isNotEmpty)
-          Container(
-            margin: EdgeInsets.only(top: 8),
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: passwordError == null
-                  ? Color(0xFFF0FDF4)
-                  : Color(0xFFFEF2F2),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: passwordError == null
-                    ? Color(0xFFD1FAE5)
-                    : Color(0xFFFECACA),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Password Requirements',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
-                  ),
-                ),
-                SizedBox(height: 8),
-                _buildRequirementItem(
-                  'At least 8 characters',
-                  newPasswordController.text.length >= 8,
-                ),
-                _buildRequirementItem(
-                  'Contains uppercase letter',
-                  RegExp(r'[A-Z]').hasMatch(newPasswordController.text),
-                ),
-                _buildRequirementItem(
-                  'Contains lowercase letter',
-                  RegExp(r'[a-z]').hasMatch(newPasswordController.text),
-                ),
-                _buildRequirementItem(
-                  'Contains number',
-                  RegExp(r'\d').hasMatch(newPasswordController.text),
-                ),
-                _buildRequirementItem(
-                  'Contains special character',
-                  RegExp(
-                    r'[!@#$%^&*(),.?":{}|<>]',
-                  ).hasMatch(newPasswordController.text),
-                ),
-              ],
-            ),
-          ),
-
-        SizedBox(height: 16),
-
-        // Confirm password field
-        Text(
-          'Confirm New Password',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFE5E7EB)),
-          ),
-          child: TextField(
-            controller: confirmPasswordController,
-            obscureText: !isConfirmPasswordVisible,
-            decoration: InputDecoration(
-              hintText: 'Confirm new password',
-              hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF9CA3AF)),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  isConfirmPasswordVisible
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: Color(0xFF9CA3AF),
-                ),
-                onPressed: () {
-                  setState(() {
-                    isConfirmPasswordVisible = !isConfirmPasswordVisible;
-                  });
-                },
-              ),
-            ),
-          ),
+        // Password inputs with shared validation
+        SharedPasswordInput(
+          passwordController: newPasswordController,
+          confirmPasswordController: confirmPasswordController,
+          isPasswordVisible: isNewPasswordVisible,
+          isConfirmPasswordVisible: isConfirmPasswordVisible,
+          onPasswordVisibilityToggle: () {
+            setState(() {
+              isNewPasswordVisible = !isNewPasswordVisible;
+            });
+          },
+          onConfirmPasswordVisibilityToggle: () {
+            setState(() {
+              isConfirmPasswordVisible = !isConfirmPasswordVisible;
+            });
+          },
+          passwordError: passwordError,
+          onPasswordChanged: (value) => validatePassword(value),
+          onConfirmPasswordChanged: (value) => setState(() {}),
+          passwordHint: 'Enter new password',
+          confirmPasswordHint: 'Confirm new password',
         ),
         SizedBox(height: 32),
 
@@ -681,151 +517,27 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
         ),
         SizedBox(height: 40),
 
-        // New password field
-        Text(
-          'New Password',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFE5E7EB)),
-          ),
-          child: TextField(
-            controller: newPasswordController,
-            obscureText: !isNewPasswordVisible,
-            onChanged: (_) => _validatePassword(),
-            decoration: InputDecoration(
-              hintText: 'Enter new password (8+ characters)',
-              hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF9CA3AF)),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  isNewPasswordVisible
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: Color(0xFF9CA3AF),
-                ),
-                onPressed: () {
-                  setState(() {
-                    isNewPasswordVisible = !isNewPasswordVisible;
-                  });
-                },
-              ),
-            ),
-          ),
-        ),
-
-        // Password requirements visual feedback
-        if (newPasswordController.text.isNotEmpty)
-          Container(
-            margin: EdgeInsets.only(top: 8),
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: passwordError == null
-                  ? Color(0xFFF0FDF4)
-                  : Color(0xFFFEF2F2),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: passwordError == null
-                    ? Color(0xFFD1FAE5)
-                    : Color(0xFFFECACA),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Password Requirements',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
-                  ),
-                ),
-                SizedBox(height: 8),
-                _buildRequirementItem(
-                  'At least 8 characters',
-                  newPasswordController.text.length >= 8,
-                ),
-                _buildRequirementItem(
-                  'Contains uppercase letter',
-                  RegExp(r'[A-Z]').hasMatch(newPasswordController.text),
-                ),
-                _buildRequirementItem(
-                  'Contains lowercase letter',
-                  RegExp(r'[a-z]').hasMatch(newPasswordController.text),
-                ),
-                _buildRequirementItem(
-                  'Contains number',
-                  RegExp(r'\d').hasMatch(newPasswordController.text),
-                ),
-                _buildRequirementItem(
-                  'Contains special character',
-                  RegExp(
-                    r'[!@#$%^&*(),.?":{}|<>]',
-                  ).hasMatch(newPasswordController.text),
-                ),
-              ],
-            ),
-          ),
-
-        SizedBox(height: 16),
-
-        // Confirm password field
-        Text(
-          'Confirm New Password',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFE5E7EB)),
-          ),
-          child: TextField(
-            controller: confirmPasswordController,
-            obscureText: !isConfirmPasswordVisible,
-            decoration: InputDecoration(
-              hintText: 'Confirm new password',
-              hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF9CA3AF)),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  isConfirmPasswordVisible
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: Color(0xFF9CA3AF),
-                ),
-                onPressed: () {
-                  setState(() {
-                    isConfirmPasswordVisible = !isConfirmPasswordVisible;
-                  });
-                },
-              ),
-            ),
-          ),
+        // Password inputs with shared validation
+        SharedPasswordInput(
+          passwordController: newPasswordController,
+          confirmPasswordController: confirmPasswordController,
+          isPasswordVisible: isNewPasswordVisible,
+          isConfirmPasswordVisible: isConfirmPasswordVisible,
+          onPasswordVisibilityToggle: () {
+            setState(() {
+              isNewPasswordVisible = !isNewPasswordVisible;
+            });
+          },
+          onConfirmPasswordVisibilityToggle: () {
+            setState(() {
+              isConfirmPasswordVisible = !isConfirmPasswordVisible;
+            });
+          },
+          passwordError: passwordError,
+          onPasswordChanged: (value) => validatePassword(value),
+          onConfirmPasswordChanged: (value) => setState(() {}),
+          passwordHint: 'Enter new password (8+ characters)',
+          confirmPasswordHint: 'Confirm new password',
         ),
         SizedBox(height: 32),
 

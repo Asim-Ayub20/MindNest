@@ -5,7 +5,7 @@ import 'patient_onboarding_screen.dart';
 import 'therapist_onboarding_screen.dart';
 import 'email_verification_screen.dart';
 import '../utils/logo_widget.dart';
-import '../utils/input_validators.dart';
+import '../widgets/shared_password_input.dart';
 
 class SignupScreen extends StatefulWidget {
   final String userType;
@@ -16,7 +16,7 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -24,7 +24,6 @@ class _SignupScreenState extends State<SignupScreen> {
   bool isLoading = false;
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
-  String? passwordError;
 
   Future<void> handleSignup() async {
     if (emailController.text.isEmpty ||
@@ -34,17 +33,13 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    // Validate password complexity
-    final passwordValidation = InputValidators.validatePassword(
+    // Use shared password validation
+    final passwordValidation = SharedPasswordValidator.validatePasswordComplete(
       passwordController.text,
+      confirmPasswordController.text,
     );
     if (passwordValidation != null) {
       _showMessage(passwordValidation);
-      return;
-    }
-
-    if (passwordController.text != confirmPasswordController.text) {
-      _showMessage('Passwords do not match');
       return;
     }
 
@@ -127,38 +122,6 @@ class _SignupScreenState extends State<SignupScreen> {
         isLoading = false;
       });
     }
-  }
-
-  void _validatePassword() {
-    setState(() {
-      passwordError = InputValidators.validatePassword(passwordController.text);
-    });
-  }
-
-  Widget _buildRequirementItem(String requirement, bool isMet) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Icon(
-            isMet ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isMet ? Color(0xFF10B981) : Color(0xFF9CA3AF),
-            size: 12,
-          ),
-          SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              requirement,
-              style: TextStyle(
-                fontSize: 11,
-                color: isMet ? Color(0xFF059669) : Color(0xFF6B7280),
-                fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showMessage(String message, {bool isError = true}) {
@@ -278,177 +241,31 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       SizedBox(height: 20),
 
-                      // Password field
-                      Text(
-                        'Password',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF374151),
-                        ),
+                      // Password Input with Requirements
+                      SharedPasswordInput(
+                        passwordController: passwordController,
+                        confirmPasswordController: confirmPasswordController,
+                        isPasswordVisible: isPasswordVisible,
+                        isConfirmPasswordVisible: isConfirmPasswordVisible,
+                        onPasswordVisibilityToggle: () {
+                          setState(() {
+                            isPasswordVisible = !isPasswordVisible;
+                          });
+                        },
+                        onConfirmPasswordVisibilityToggle: () {
+                          setState(() {
+                            isConfirmPasswordVisible =
+                                !isConfirmPasswordVisible;
+                          });
+                        },
+                        passwordError: passwordError,
+                        onPasswordChanged: onPasswordChanged,
+                        onConfirmPasswordChanged: (_) {},
+                        passwordHint: 'Create a strong password',
+                        confirmPasswordHint: 'Confirm your password',
+                        showConfirmPassword: true,
                       ),
-                      SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Color(0xFFE5E7EB)),
-                        ),
-                        child: TextField(
-                          controller: passwordController,
-                          obscureText: !isPasswordVisible,
-                          onChanged: (value) => _validatePassword(),
-                          decoration: InputDecoration(
-                            hintText: 'Create a strong password',
-                            hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                isPasswordVisible
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                color: Color(0xFF9CA3AF),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  isPasswordVisible = !isPasswordVisible;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 20),
-
-                      // Confirm Password field
-                      Text(
-                        'Confirm Password',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF374151),
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Color(0xFFE5E7EB)),
-                        ),
-                        child: TextField(
-                          controller: confirmPasswordController,
-                          obscureText: !isConfirmPasswordVisible,
-                          decoration: InputDecoration(
-                            hintText: 'Confirm your password',
-                            hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                isConfirmPasswordVisible
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                color: Color(0xFF9CA3AF),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  isConfirmPasswordVisible =
-                                      !isConfirmPasswordVisible;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 16),
-
-                      // Password requirements and validation
-                      Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color:
-                              passwordError == null &&
-                                  passwordController.text.isNotEmpty
-                              ? Color(0xFFF0FDF4) // Green background when valid
-                              : Color(0xFFF0F9FF), // Blue background by default
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color:
-                                passwordError == null &&
-                                    passwordController.text.isNotEmpty
-                                ? Color(0xFFBBF7D0) // Green border when valid
-                                : Color(0xFFBFDBFE), // Blue border by default
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  passwordError == null &&
-                                          passwordController.text.isNotEmpty
-                                      ? Icons.check_circle_outline
-                                      : Icons.info_outline,
-                                  color:
-                                      passwordError == null &&
-                                          passwordController.text.isNotEmpty
-                                      ? Color(0xFF10B981)
-                                      : Color(0xFF3B82F6),
-                                  size: 16,
-                                ),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Password Requirements:',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color:
-                                          passwordError == null &&
-                                              passwordController.text.isNotEmpty
-                                          ? Color(0xFF059669)
-                                          : Color(0xFF1E40AF),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            _buildRequirementItem(
-                              'At least 8 characters',
-                              passwordController.text.length >= 8,
-                            ),
-                            _buildRequirementItem(
-                              'Contains letters (A-Z or a-z)',
-                              RegExp(
-                                r'[a-zA-Z]',
-                              ).hasMatch(passwordController.text),
-                            ),
-                            _buildRequirementItem(
-                              'Contains numbers (0-9)',
-                              RegExp(
-                                r'[0-9]',
-                              ).hasMatch(passwordController.text),
-                            ),
-                            _buildRequirementItem(
-                              'Contains special characters (!@#\$%^&*)',
-                              RegExp(
-                                r'[!@#$%^&*(),.?":{}|<>_+=\-\[\]\\;/~`]',
-                              ).hasMatch(passwordController.text),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
                       // Create Account Button
                       Container(

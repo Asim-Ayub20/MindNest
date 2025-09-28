@@ -6,6 +6,7 @@ import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/user_type_selection_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/patient_dashboard_screen.dart';
 import 'screens/patient_onboarding_screen.dart';
 import 'screens/patient_details_screen.dart';
 import 'screens/therapist_onboarding_screen.dart';
@@ -13,6 +14,7 @@ import 'screens/therapist_details_screen.dart';
 import 'screens/password_reset_screen.dart';
 import 'screens/email_verification_success_screen.dart';
 import 'utils/page_transitions.dart';
+import 'utils/app_theme.dart';
 
 // Global navigator key for handling navigation from anywhere
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -216,7 +218,9 @@ class _MindNestAppState extends State<MindNestApp> {
           onboarding?['progress_percentage'] as int? ?? 0;
 
       // Get current route to determine the navigation context
-      final currentRoute = ModalRoute.of(context)?.settings.name;
+      final currentRoute = context.mounted
+          ? ModalRoute.of(context)?.settings.name
+          : null;
 
       // Check if this is a new user who just verified their email
       // This should only happen when:
@@ -254,15 +258,17 @@ class _MindNestAppState extends State<MindNestApp> {
             debugPrint(
               'New user from email verification - showing success screen',
             );
-            Navigator.of(context).pushAndRemoveUntil(
-              CustomPageTransitions.slideFromRight<void>(
-                EmailVerificationSuccessScreen(
-                  email: user.email ?? '',
-                  userType: userRole,
+            if (context.mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                CustomPageTransitions.slideFromRight<void>(
+                  EmailVerificationSuccessScreen(
+                    email: user.email ?? '',
+                    userType: userRole,
+                  ),
                 ),
-              ),
-              (route) => false,
-            );
+                (route) => false,
+              );
+            }
             return;
           }
         } catch (e) {
@@ -332,23 +338,46 @@ class _MindNestAppState extends State<MindNestApp> {
           }
         }
 
-        // Navigate to home screen
+        // Navigate to appropriate home screen based on user role
         if (context.mounted) {
+          if (userRole == 'patient') {
+            Navigator.of(context).pushAndRemoveUntil(
+              CustomPageTransitions.fadeTransition<void>(
+                PatientDashboardScreen(),
+              ),
+              (route) => false,
+            );
+          } else {
+            // For therapists and admins, use the existing HomeScreen
+            Navigator.of(context).pushAndRemoveUntil(
+              CustomPageTransitions.fadeTransition<void>(HomeScreen()),
+              (route) => false,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error handling signed in user: $e');
+      // Default to appropriate screen based on user role if available
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        // Try to get user role from current session
+        final user = Supabase.instance.client.auth.currentUser;
+        final userRole = user?.userMetadata?['role'] ?? 'patient';
+
+        if (userRole == 'patient') {
+          Navigator.of(context).pushAndRemoveUntil(
+            CustomPageTransitions.fadeTransition<void>(
+              PatientDashboardScreen(),
+            ),
+            (route) => false,
+          );
+        } else {
           Navigator.of(context).pushAndRemoveUntil(
             CustomPageTransitions.fadeTransition<void>(HomeScreen()),
             (route) => false,
           );
         }
-      }
-    } catch (e) {
-      debugPrint('Error handling signed in user: $e');
-      // Default to home screen if there's an error
-      final context = navigatorKey.currentContext;
-      if (context != null && context.mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          CustomPageTransitions.fadeTransition<void>(HomeScreen()),
-          (route) => false,
-        );
       }
     }
   }
@@ -359,18 +388,13 @@ class _MindNestAppState extends State<MindNestApp> {
       title: 'MindNest',
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        // Performance optimizations
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: AppTheme.lightTheme,
       home: SplashScreen(),
       routes: {
         '/login': (context) => LoginScreen(),
         '/signup': (context) => UserTypeSelectionScreen(),
         '/home': (context) => HomeScreen(),
+        '/patient-dashboard': (context) => PatientDashboardScreen(),
         '/splash': (context) => SplashScreen(),
         '/reset-password': (context) => PasswordResetScreen(),
       },

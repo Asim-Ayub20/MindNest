@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/utils/input_validators.dart';
+import 'package:mindnest_app/utils/input_validators.dart';
 
 void main() {
   group('InputValidators Password Tests', () {

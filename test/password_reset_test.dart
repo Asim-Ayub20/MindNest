@@ -58,8 +58,9 @@ void main() {
         if (!RegExp(r'[0-9]').hasMatch(password)) return false;
         if (!RegExp(
           r'[!@#$%^&*(),.?":{}|<>_+=\-\[\]\\;/~`]',
-        ).hasMatch(password))
+        ).hasMatch(password)) {
           return false;
+        }
         return true;
       }
 

@@ -48,9 +48,24 @@ class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
     });
 
     try {
-      // Skip complex validation and go straight to signup for better performance
-      // Let Supabase handle duplicate email validation
-      debugPrint('Starting optimized signup process');
+      // Check if email already exists in profiles table
+      final existingUser = await Supabase.instance.client
+          .from('profiles')
+          .select('id, email')
+          .eq('email', emailController.text.trim().toLowerCase())
+          .maybeSingle();
+
+      if (existingUser != null) {
+        _showMessage(
+          'This email is already registered. Please sign in instead.',
+        );
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      debugPrint('Starting signup process for new email');
 
       final AuthResponse response = await Supabase.instance.client.auth
           .signUp(

@@ -6,6 +6,7 @@ import 'patient_details_screen.dart';
 import 'therapist_onboarding_screen.dart';
 import 'therapist_details_screen.dart';
 import 'home_screen.dart';
+import 'patient_dashboard_screen.dart';
 
 class EmailVerificationSuccessScreen extends StatefulWidget {
   final String email;
@@ -126,11 +127,13 @@ class _EmailVerificationSuccessScreenState
               .maybeSingle();
 
           if (patientDetails == null) {
-            Navigator.of(context).pushReplacement(
-              CustomPageTransitions.slideFromRight<void>(
-                PatientDetailsScreen(),
-              ),
-            );
+            if (context.mounted) {
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  PatientDetailsScreen(),
+                ),
+              );
+            }
             return;
           }
         } else if (userRole == 'therapist') {
@@ -141,27 +144,47 @@ class _EmailVerificationSuccessScreenState
               .maybeSingle();
 
           if (therapistDetails == null) {
-            Navigator.of(context).pushReplacement(
-              CustomPageTransitions.slideFromRight<void>(
-                TherapistDetailsScreen(),
-              ),
-            );
+            if (context.mounted) {
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  TherapistDetailsScreen(),
+                ),
+              );
+            }
             return;
           }
         }
 
-        // Navigate to home screen
-        Navigator.of(context).pushReplacement(
-          CustomPageTransitions.fadeTransition<void>(HomeScreen()),
-        );
+        // Navigate to appropriate home screen based on user role
+        if (context.mounted) {
+          if (widget.userType == 'patient') {
+            Navigator.of(context).pushReplacement(
+              CustomPageTransitions.fadeTransition<void>(
+                PatientDashboardScreen(),
+              ),
+            );
+          } else {
+            Navigator.of(context).pushReplacement(
+              CustomPageTransitions.fadeTransition<void>(HomeScreen()),
+            );
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error navigating after email verification: $e');
-      // Default to home screen
+      // Default to appropriate home screen based on user type
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          CustomPageTransitions.fadeTransition<void>(HomeScreen()),
-        );
+        if (widget.userType == 'patient') {
+          Navigator.of(context).pushReplacement(
+            CustomPageTransitions.fadeTransition<void>(
+              PatientDashboardScreen(),
+            ),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            CustomPageTransitions.fadeTransition<void>(HomeScreen()),
+          );
+        }
       }
     }
   }

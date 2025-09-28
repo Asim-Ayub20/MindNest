@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import '../utils/page_transitions.dart';
 import '../widgets/custom_input_fields.dart';
 import '../widgets/location_selector.dart';
-import 'home_screen.dart';
+import 'patient_dashboard_screen.dart';
 
 class PatientDetailsScreen extends StatefulWidget {
   const PatientDetailsScreen({super.key});
@@ -699,12 +699,24 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
       }
 
       // Create patients table entry
+      debugPrint('Creating patient record for user: ${user.id}');
       await _createPatientRecord(user.id, profilePicUrl);
+      debugPrint('Patient record created successfully');
 
-      // Navigate to home screen
+      // Show success message
+      if (mounted) {
+        _showMessage('Profile saved successfully!', isError: false);
+      }
+
+      // Wait a moment to show the success message
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // Navigate to patient dashboard
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          CustomPageTransitions.fadeTransition<void>(const HomeScreen()),
+          CustomPageTransitions.fadeTransition<void>(
+            const PatientDashboardScreen(),
+          ),
           (route) => false,
         );
       }
@@ -748,7 +760,10 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         '${_emergencyFirstNameController.text.trim()} ${_emergencyLastNameController.text.trim()}';
     final location = '$_selectedCountry, $_selectedCity';
 
-    await Supabase.instance.client.from('patients').upsert({
+    debugPrint('Inserting patient record with data: $fullName');
+
+    // Insert into patients table
+    final patientData = {
       'id': userId,
       'first_name': _firstNameController.text.trim(),
       'last_name': _lastNameController.text.trim(),
@@ -765,19 +780,98 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
       'emergency_name': emergencyName,
       'emergency_phone': _emergencyPhoneController.text.trim(),
       'profile_pic_url': profilePicUrl,
-    });
+      'created_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
+    await Supabase.instance.client.from('patients').upsert(patientData);
+    debugPrint('Successfully inserted into patients table');
 
     // Update the profiles table with additional info
+    final profileData = {
+      'full_name': fullName,
+      'phone_number': _phoneController.text.trim(),
+      'date_of_birth': _dateOfBirth!.toIso8601String().split('T')[0],
+      'avatar_url': profilePicUrl,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
     await Supabase.instance.client
         .from('profiles')
-        .update({
-          'full_name': fullName,
-          'phone_number': _phoneController.text.trim(),
-          'date_of_birth': _dateOfBirth!.toIso8601String().split('T')[0],
-          'avatar_url': profilePicUrl,
-          'updated_at': DateTime.now().toIso8601String(),
-        })
+        .update(profileData)
         .eq('id', userId);
+
+    debugPrint('Successfully updated profiles table');
+
+    // Check if user_onboarding record exists, and create/update it properly
+    try {
+      final existingOnboarding = await Supabase.instance.client
+          .from('user_onboarding')
+          .select('id, onboarding_type, user_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      debugPrint('Existing onboarding record: $existingOnboarding');
+
+      if (existingOnboarding != null) {
+        // Update existing record
+        await Supabase.instance.client
+            .from('user_onboarding')
+            .update({
+              'current_step': 'completed',
+              'progress_percentage': 100,
+              'onboarding_1_completed': true,
+              'onboarding_2_completed': true,
+              'onboarding_3_completed': true,
+              'onboarding_4_completed': true,
+              'completed_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('user_id', userId);
+      } else {
+        // Insert new record if it doesn't exist (fallback)
+        await Supabase.instance.client.from('user_onboarding').insert({
+          'user_id': userId,
+          'onboarding_type': 'patient',
+          'current_step': 'completed',
+          'progress_percentage': 100,
+          'user_type_selected': true,
+          'account_created': true,
+          'onboarding_1_completed': true,
+          'onboarding_2_completed': true,
+          'onboarding_3_completed': true,
+          'onboarding_4_completed': true,
+          'completed_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      }
+    } catch (onboardingError) {
+      debugPrint('Error with onboarding record: $onboardingError');
+      // Try to create the record as a fallback
+      try {
+        await Supabase.instance.client.from('user_onboarding').insert({
+          'user_id': userId,
+          'onboarding_type': 'patient',
+          'current_step': 'completed',
+          'progress_percentage': 100,
+          'user_type_selected': true,
+          'account_created': true,
+          'onboarding_1_completed': true,
+          'onboarding_2_completed': true,
+          'onboarding_3_completed': true,
+          'onboarding_4_completed': true,
+          'completed_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      } catch (insertError) {
+        debugPrint('Failed to insert onboarding record: $insertError');
+        throw Exception('Could not create onboarding record: $insertError');
+      }
+    }
+
+    debugPrint('Successfully updated onboarding progress to 100%');
   }
 
   void _showMessage(String message, {bool isError = true}) {

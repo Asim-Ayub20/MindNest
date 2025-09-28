@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
+import 'patient_dashboard_screen.dart';
+import 'patient_details_screen.dart';
+import 'therapist_details_screen.dart';
 import '../utils/page_transitions.dart';
 import '../utils/logo_widget.dart';
 
@@ -118,9 +121,57 @@ class _SplashScreenState extends State<SplashScreen>
 
       if (mounted) {
         if (session != null) {
-          Navigator.of(context).pushReplacement(
-            CustomPageTransitions.fadeTransition<void>(HomeScreen()),
-          );
+          // Get user and check if they need to complete profile details
+          final user = session.user;
+          final userRole = user.userMetadata?['role'] ?? 'patient';
+
+          // Check if user has completed their profile details
+          if (userRole == 'patient') {
+            final patientDetails = await Supabase.instance.client
+                .from('patients')
+                .select('id')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (patientDetails == null) {
+              // Patient hasn't completed profile details
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  PatientDetailsScreen(),
+                ),
+              );
+              return;
+            }
+          } else if (userRole == 'therapist') {
+            final therapistDetails = await Supabase.instance.client
+                .from('therapists')
+                .select('id')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (therapistDetails == null) {
+              // Therapist hasn't completed profile details
+              Navigator.of(context).pushReplacement(
+                CustomPageTransitions.slideFromRight<void>(
+                  TherapistDetailsScreen(),
+                ),
+              );
+              return;
+            }
+          }
+
+          // User has completed profile, navigate to appropriate dashboard
+          if (userRole == 'patient') {
+            Navigator.of(context).pushReplacement(
+              CustomPageTransitions.fadeTransition<void>(
+                PatientDashboardScreen(),
+              ),
+            );
+          } else {
+            Navigator.of(context).pushReplacement(
+              CustomPageTransitions.fadeTransition<void>(HomeScreen()),
+            );
+          }
         } else {
           Navigator.of(context).pushReplacement(
             CustomPageTransitions.slideFromRight<void>(LoginScreen()),

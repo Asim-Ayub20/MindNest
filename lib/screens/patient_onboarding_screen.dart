@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
 import '../models/onboarding_data.dart';
 import 'patient_details_screen.dart';
@@ -70,10 +71,65 @@ class _PatientOnboardingScreenState extends State<PatientOnboardingScreen> {
     }
   }
 
-  void _completeOnboarding() {
-    Navigator.of(context).pushReplacement(
-      CustomPageTransitions.fadeTransition<void>(PatientDetailsScreen()),
-    );
+  Future<void> _completeOnboarding() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        // Check if user_onboarding record exists and update/create appropriately
+        try {
+          final existingOnboarding = await Supabase.instance.client
+              .from('user_onboarding')
+              .select('id, onboarding_type')
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+          if (existingOnboarding != null) {
+            // Update existing record
+            await Supabase.instance.client
+                .from('user_onboarding')
+                .update({
+                  'current_step': 'onboarding_4',
+                  'progress_percentage': 75,
+                  'user_type_selected': true,
+                  'account_created': true,
+                  'onboarding_1_completed': true,
+                  'onboarding_2_completed': true,
+                  'onboarding_3_completed': true,
+                  'onboarding_4_completed': true,
+                  'updated_at': DateTime.now().toIso8601String(),
+                })
+                .eq('user_id', user.id);
+          } else {
+            // Insert new record if it doesn't exist
+            await Supabase.instance.client.from('user_onboarding').insert({
+              'user_id': user.id,
+              'onboarding_type': 'patient',
+              'current_step': 'onboarding_4',
+              'progress_percentage': 75,
+              'user_type_selected': true,
+              'account_created': true,
+              'onboarding_1_completed': true,
+              'onboarding_2_completed': true,
+              'onboarding_3_completed': true,
+              'onboarding_4_completed': true,
+              'created_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toIso8601String(),
+            });
+          }
+        } catch (onboardingError) {
+          debugPrint('Error updating onboarding progress: $onboardingError');
+          // Don't fail the entire flow if onboarding update fails
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating onboarding progress: $e');
+    }
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        CustomPageTransitions.fadeTransition<void>(PatientDetailsScreen()),
+      );
+    }
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/ui_helpers.dart';
 
 class SimplePasswordResetScreen extends StatefulWidget {
   const SimplePasswordResetScreen({super.key});
@@ -115,18 +116,7 @@ class _SimplePasswordResetScreenState extends State<SimplePasswordResetScreen> {
   }
 
   void _showMessage(String message, {bool isError = true}) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.all(16),
-        duration: Duration(seconds: isError ? 4 : 6),
-      ),
-    );
+    UIHelpers.showMessage(context, message, isError: isError);
   }
 
   @override

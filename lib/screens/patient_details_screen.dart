@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../utils/page_transitions.dart';
+import '../utils/ui_helpers.dart';
 import '../widgets/custom_input_fields.dart';
 import '../widgets/location_selector.dart';
 import 'patient_dashboard_screen.dart';
@@ -875,16 +876,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   }
 
   void _showMessage(String message, {bool isError = true}) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    UIHelpers.showMessage(context, message, isError: isError);
   }
 }

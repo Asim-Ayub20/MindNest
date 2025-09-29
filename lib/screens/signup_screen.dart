@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
+import '../utils/ui_helpers.dart';
 import 'patient_onboarding_screen.dart';
 import 'therapist_onboarding_screen.dart';
 import 'email_verification_screen.dart';
@@ -140,15 +141,7 @@ class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
   }
 
   void _showMessage(String message, {bool isError = true}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.all(16),
-      ),
-    );
+    UIHelpers.showMessage(context, message, isError: isError);
   }
 
   @override

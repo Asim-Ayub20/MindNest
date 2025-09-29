@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/ui_helpers.dart';
 import '../widgets/shared_password_input.dart';
 
 // Reset flow states
@@ -76,11 +77,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
       return;
     }
 
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
+    await _handleAsyncOperation(() async {
       // Check if user exists first
       final existingUser = await Supabase.instance.client
           .from('profiles')
@@ -89,14 +86,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
           .limit(1);
 
       if (existingUser.isEmpty) {
-        setState(() {
-          isLoading = false;
-        });
         _showMessage('No account found with this email address');
         return;
       }
 
-      // Use resetPasswordForEmail - this will send an email with reset link/code
       await Supabase.instance.client.auth.resetPasswordForEmail(
         emailController.text.trim(),
       );
@@ -105,24 +98,13 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
         userEmail = emailController.text.trim();
         maskedEmail = maskEmail(userEmail);
         currentState = ResetState.otp;
-        isLoading = false;
       });
 
       _showMessage(
         'Password reset instructions sent to your email. Please check your email for a reset code.',
         isError: false,
       );
-    } on AuthException catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('Failed to send reset email: ${error.message}');
-    } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('An unexpected error occurred. Please try again.');
-    }
+    });
   }
 
   Future<void> verifyOTPAndResetPassword() async {
@@ -131,7 +113,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
       return;
     }
 
-    // Use shared password validation
     final passwordValidationError =
         SharedPasswordValidator.validatePasswordComplete(
           newPasswordController.text,
@@ -143,12 +124,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
       return;
     }
 
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      // Verify the OTP for password recovery
+    await _handleAsyncOperation(() async {
       final AuthResponse response = await Supabase.instance.client.auth
           .verifyOTP(
             token: otpController.text.trim(),
@@ -157,39 +133,20 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
           );
 
       if (response.user != null) {
-        // Now update the password
         await Supabase.instance.client.auth.updateUser(
           UserAttributes(password: newPasswordController.text),
         );
 
-        setState(() {
-          isLoading = false;
-        });
-
         _showMessage('Password updated successfully!', isError: false);
 
-        // Navigate back to login after successful password reset
         Future.delayed(Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
+          if (mounted) Navigator.of(context).pop();
         });
       }
-    } on AuthException catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('Failed to reset password: ${error.message}');
-    } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('An unexpected error occurred. Please try again.');
-    }
+    });
   }
 
   Future<void> resetPasswordWithToken() async {
-    // Use shared password validation
     final passwordValidationError =
         SharedPasswordValidator.validatePasswordComplete(
           newPasswordController.text,
@@ -201,23 +158,13 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
       return;
     }
 
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      // Update the password using the session from the deep link
+    await _handleAsyncOperation(() async {
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: newPasswordController.text),
       );
 
-      setState(() {
-        isLoading = false;
-      });
-
       _showMessage('Password updated successfully!', isError: false);
 
-      // Sign out the user and navigate to login
       await Supabase.instance.client.auth.signOut();
 
       Future.delayed(Duration(seconds: 2), () {
@@ -227,114 +174,153 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
           ).pushNamedAndRemoveUntil('/login', (route) => false);
         }
       });
-    } on AuthException catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('Failed to reset password: ${error.message}');
-    } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      _showMessage('An unexpected error occurred. Please try again.');
-    }
+    });
   }
 
   void _showMessage(String message, {bool isError = true}) {
-    if (!mounted) return;
+    UIHelpers.showMessage(context, message, isError: isError);
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.all(16),
+  // Reusable UI helper methods
+  Widget _buildStyledTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData prefixIcon,
+    TextInputType? keyboardType,
+    int? maxLength,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFFE5E7EB)),
+      ),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          prefixIcon: Icon(prefixIcon, color: Color(0xFF9CA3AF)),
+        ),
+        keyboardType: keyboardType,
+        maxLength: maxLength,
+        buildCounter: maxLength != null
+            ? (
+                context, {
+                required currentLength,
+                required isFocused,
+                maxLength,
+              }) => null
+            : null,
       ),
     );
+  }
+
+  Widget _buildStyledButton({
+    required String text,
+    required VoidCallback? onPressed,
+    bool isLoading = false,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xFF10B981),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          disabledBackgroundColor: Color(0xFFE5E7EB),
+        ),
+        child: isLoading
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                text,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label) {
+    return Text(
+      label,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF374151),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF1F2937),
+      ),
+    );
+  }
+
+  Widget _buildSectionDescription(String description) {
+    return Text(
+      description,
+      style: TextStyle(fontSize: 16, color: Color(0xFF6B7280), height: 1.5),
+    );
+  }
+
+  Future<void> _handleAsyncOperation(Future<void> Function() operation) async {
+    setState(() => isLoading = true);
+    try {
+      await operation();
+    } on AuthException catch (error) {
+      if (mounted) _showMessage('Failed: ${error.message}');
+    } catch (error) {
+      if (mounted) {
+        _showMessage('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   Widget buildEmailStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Reset Password',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
-          ),
-        ),
+        _buildSectionTitle('Reset Password'),
         SizedBox(height: 12),
-        Text(
+        _buildSectionDescription(
           'Enter your email address and we\'ll send you a verification code to reset your password.',
-          style: TextStyle(fontSize: 16, color: Color(0xFF6B7280), height: 1.5),
         ),
         SizedBox(height: 40),
-
-        // Email field
-        Text(
-          'Email Address',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
+        _buildFieldLabel('Email Address'),
         SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFE5E7EB)),
-          ),
-          child: TextField(
-            controller: emailController,
-            decoration: InputDecoration(
-              hintText: 'Enter your email address',
-              hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF9CA3AF)),
-            ),
-            keyboardType: TextInputType.emailAddress,
-          ),
+        _buildStyledTextField(
+          controller: emailController,
+          hintText: 'Enter your email address',
+          prefixIcon: Icons.email_outlined,
+          keyboardType: TextInputType.emailAddress,
         ),
         SizedBox(height: 32),
-
-        // Send reset button
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: isLoading ? null : sendPasswordReset,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF10B981),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              disabledBackgroundColor: Color(0xFFE5E7EB),
-            ),
-            child: isLoading
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    'Send Reset Code',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-          ),
+        _buildStyledButton(
+          text: 'Send Reset Code',
+          onPressed: sendPasswordReset,
+          isLoading: isLoading,
         ),
       ],
     );
@@ -344,14 +330,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Verify Code',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
-          ),
-        ),
+        _buildSectionTitle('Verify Code'),
         SizedBox(height: 12),
         RichText(
           text: TextSpan(
@@ -374,64 +353,26 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
           ),
         ),
         SizedBox(height: 40),
-
-        // OTP field
-        Text(
-          'Verification Code',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
+        _buildFieldLabel('Verification Code'),
         SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFE5E7EB)),
-          ),
-          child: TextField(
-            controller: otpController,
-            decoration: InputDecoration(
-              hintText: 'Enter 6-digit code',
-              hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              prefixIcon: Icon(Icons.pin_outlined, color: Color(0xFF9CA3AF)),
-            ),
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            buildCounter:
-                (
-                  context, {
-                  required currentLength,
-                  required isFocused,
-                  maxLength,
-                }) => null,
-          ),
+        _buildStyledTextField(
+          controller: otpController,
+          hintText: 'Enter 6-digit code',
+          prefixIcon: Icons.pin_outlined,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
         ),
         SizedBox(height: 24),
-
-        // Password inputs with shared validation
         SharedPasswordInput(
           passwordController: newPasswordController,
           confirmPasswordController: confirmPasswordController,
           isPasswordVisible: isNewPasswordVisible,
           isConfirmPasswordVisible: isConfirmPasswordVisible,
-          onPasswordVisibilityToggle: () {
-            setState(() {
-              isNewPasswordVisible = !isNewPasswordVisible;
-            });
-          },
-          onConfirmPasswordVisibilityToggle: () {
-            setState(() {
-              isConfirmPasswordVisible = !isConfirmPasswordVisible;
-            });
-          },
+          onPasswordVisibilityToggle: () =>
+              setState(() => isNewPasswordVisible = !isNewPasswordVisible),
+          onConfirmPasswordVisibilityToggle: () => setState(
+            () => isConfirmPasswordVisible = !isConfirmPasswordVisible,
+          ),
           passwordError: passwordError,
           onPasswordChanged: (value) => validatePassword(value),
           onConfirmPasswordChanged: (value) => setState(() {}),
@@ -439,40 +380,12 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
           confirmPasswordHint: 'Confirm new password',
         ),
         SizedBox(height: 32),
-
-        // Reset password button
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: isLoading ? null : verifyOTPAndResetPassword,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF10B981),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              disabledBackgroundColor: Color(0xFFE5E7EB),
-            ),
-            child: isLoading
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    'Reset Password',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-          ),
+        _buildStyledButton(
+          text: 'Reset Password',
+          onPressed: verifyOTPAndResetPassword,
+          isLoading: isLoading,
         ),
         SizedBox(height: 20),
-
-        // Resend code button
         Center(
           child: TextButton(
             onPressed: isLoading
@@ -502,37 +415,22 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Reset Your Password',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
-          ),
-        ),
+        _buildSectionTitle('Reset Your Password'),
         SizedBox(height: 12),
-        Text(
+        _buildSectionDescription(
           'Enter your new password below. Make sure it\'s at least 8 characters long.',
-          style: TextStyle(fontSize: 16, color: Color(0xFF6B7280), height: 1.5),
         ),
         SizedBox(height: 40),
-
-        // Password inputs with shared validation
         SharedPasswordInput(
           passwordController: newPasswordController,
           confirmPasswordController: confirmPasswordController,
           isPasswordVisible: isNewPasswordVisible,
           isConfirmPasswordVisible: isConfirmPasswordVisible,
-          onPasswordVisibilityToggle: () {
-            setState(() {
-              isNewPasswordVisible = !isNewPasswordVisible;
-            });
-          },
-          onConfirmPasswordVisibilityToggle: () {
-            setState(() {
-              isConfirmPasswordVisible = !isConfirmPasswordVisible;
-            });
-          },
+          onPasswordVisibilityToggle: () =>
+              setState(() => isNewPasswordVisible = !isNewPasswordVisible),
+          onConfirmPasswordVisibilityToggle: () => setState(
+            () => isConfirmPasswordVisible = !isConfirmPasswordVisible,
+          ),
           passwordError: passwordError,
           onPasswordChanged: (value) => validatePassword(value),
           onConfirmPasswordChanged: (value) => setState(() {}),
@@ -540,40 +438,12 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
           confirmPasswordHint: 'Confirm new password',
         ),
         SizedBox(height: 32),
-
-        // Update password button
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: isLoading ? null : resetPasswordWithToken,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF10B981),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              disabledBackgroundColor: Color(0xFFE5E7EB),
-            ),
-            child: isLoading
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    'Update Password',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-          ),
+        _buildStyledButton(
+          text: 'Update Password',
+          onPressed: resetPasswordWithToken,
+          isLoading: isLoading,
         ),
         SizedBox(height: 20),
-
-        // Security notice
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(

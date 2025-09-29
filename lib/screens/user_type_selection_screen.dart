@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/page_transitions.dart';
+import '../utils/app_theme.dart';
 import 'signup_screen.dart';
 import '../utils/logo_widget.dart';
 
@@ -117,7 +118,7 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
                           title: 'I need support',
                           subtitle: 'Connect with mental health professionals',
                           icon: Icons.person,
-                          gradient: [Color(0xFF10B981), Color(0xFF059669)],
+                          gradient: [AppTheme.primaryGreen, AppTheme.darkGreen],
                           description:
                               'Access therapy sessions, track your mood, and get personalized mental health support.',
                         ),
@@ -130,7 +131,7 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
                           subtitle:
                               'Help others on their mental health journey',
                           icon: Icons.psychology,
-                          gradient: [Color(0xFF10B981), Color(0xFF059669)],
+                          gradient: [AppTheme.primaryGreen, AppTheme.darkGreen],
                           description:
                               'Manage clients, schedule sessions, and provide professional mental health care.',
                         ),

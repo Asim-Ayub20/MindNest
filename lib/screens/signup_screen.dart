@@ -49,17 +49,27 @@ class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
     });
 
     try {
-      // Check if email already exists in profiles table
+      // Check if email already exists in profiles table with role information
       final existingUser = await Supabase.instance.client
           .from('profiles')
-          .select('id, email')
+          .select('id, email, role')
           .eq('email', emailController.text.trim().toLowerCase())
           .maybeSingle();
 
       if (existingUser != null) {
-        _showMessage(
-          'This email is already registered. Please sign in instead.',
-        );
+        final existingRole = existingUser['role'] as String;
+        final currentRole = widget.userType;
+
+        if (existingRole == currentRole) {
+          _showMessage(
+            'This email is already registered as a $existingRole account. Please sign in instead.',
+          );
+        } else {
+          _showMessage(
+            'This email is already registered as a $existingRole account. Please use a different email or sign in to your existing $existingRole account.',
+          );
+        }
+
         setState(() {
           isLoading = false;
         });
@@ -121,13 +131,9 @@ class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
       }
     } on AuthException catch (error) {
       debugPrint('AuthException during signup: ${error.message}');
-      if (error.message.contains('already registered')) {
-        _showMessage(
-          'This email is already registered. Please sign in instead.',
-        );
-      } else {
-        _showMessage('Signup failed: ${error.message}');
-      }
+      // Note: Email conflicts should be caught before this point
+      // This handles other auth errors like weak passwords, etc.
+      _showMessage('Signup failed: ${error.message}');
     } catch (error) {
       debugPrint('Unexpected error during signup: $error');
       _showMessage(

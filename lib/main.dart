@@ -39,12 +39,19 @@ void main() async {
     ),
   );
 
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: 'https://yqhgsmrtxgfjuljazoie.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxaGdzbXJ0eGdmanVsamF6b2llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NTE2ODEsImV4cCI6MjA3NDEyNzY4MX0.Iny6UH4vjesqQyh4sDMcmV58XKgUXDeERImhlKJNcUk',
-  );
+  // Initialize Supabase with error handling
+  try {
+    await Supabase.initialize(
+      url: 'https://yqhgsmrtxgfjuljazoie.supabase.co',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxaGdzbXJ0eGdmanVsamF6b2llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NTE2ODEsImV4cCI6MjA3NDEyNzY4MX0.Iny6UH4vjesqQyh4sDMcmV58XKgUXDeERImhlKJNcUk',
+      debug: false, // Set to false for release builds
+    );
+    debugPrint('Supabase initialized successfully');
+  } catch (e) {
+    debugPrint('Supabase initialization error: $e');
+    // App will still launch but with limited functionality
+  }
 
   runApp(MindNestApp());
 }

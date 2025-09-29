@@ -168,8 +168,33 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on AuthException catch (error) {
       _showMessage('Login failed: ${error.message}');
+    } on PostgrestException catch (error) {
+      debugPrint('Database error during login: ${error.message}');
+      _showMessage(
+        'Database connection error. Please check your internet connection and try again.',
+      );
     } catch (error) {
-      _showMessage('An unexpected error occurred');
+      debugPrint('Unexpected error during login: $error');
+
+      String errorMessage = 'An unexpected error occurred. Please try again.';
+
+      // Provide more specific error messages
+      if (error.toString().contains('SocketException') ||
+          error.toString().contains('Network is unreachable') ||
+          error.toString().contains('No route to host')) {
+        errorMessage =
+            'No internet connection. Please check your network settings and try again.';
+      } else if (error.toString().contains('TimeoutException') ||
+          error.toString().contains('timeout')) {
+        errorMessage =
+            'Connection timeout. Please check your internet connection and try again.';
+      } else if (error.toString().contains('HandshakeException') ||
+          error.toString().contains('certificate')) {
+        errorMessage =
+            'SSL connection error. Please check your network settings.';
+      }
+
+      _showMessage(errorMessage);
     } finally {
       setState(() {
         isLoading = false;

@@ -134,11 +134,34 @@ class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
       // Note: Email conflicts should be caught before this point
       // This handles other auth errors like weak passwords, etc.
       _showMessage('Signup failed: ${error.message}');
+    } on PostgrestException catch (error) {
+      debugPrint('Database error during signup: ${error.message}');
+      _showMessage(
+        'Database connection error. Please check your internet connection and try again.',
+      );
     } catch (error) {
       debugPrint('Unexpected error during signup: $error');
-      _showMessage(
-        'Network error. Please check your connection and try again.',
-      );
+
+      String errorMessage =
+          'Network error. Please check your connection and try again.';
+
+      // Provide more specific error messages
+      if (error.toString().contains('SocketException') ||
+          error.toString().contains('Network is unreachable') ||
+          error.toString().contains('No route to host')) {
+        errorMessage =
+            'No internet connection. Please check your network settings and try again.';
+      } else if (error.toString().contains('TimeoutException') ||
+          error.toString().contains('timeout')) {
+        errorMessage =
+            'Connection timeout. Please check your internet connection and try again.';
+      } else if (error.toString().contains('HandshakeException') ||
+          error.toString().contains('certificate')) {
+        errorMessage =
+            'SSL connection error. Please check your network settings.';
+      }
+
+      _showMessage(errorMessage);
     } finally {
       setState(() {
         isLoading = false;

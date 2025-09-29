@@ -7,7 +7,7 @@ import '../utils/page_transitions.dart';
 import '../utils/input_validators.dart';
 import '../widgets/custom_input_fields.dart';
 import '../widgets/location_selector.dart';
-import 'home_screen.dart';
+import 'therapist_dashboard_screen.dart';
 
 class TherapistDetailsScreen extends StatefulWidget {
   const TherapistDetailsScreen({super.key});
@@ -945,12 +945,24 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
       }
 
       // Create therapists table entry
+      debugPrint('Creating therapist record for user: ${user.id}');
       await _createTherapistRecord(user.id, profilePicUrl);
+      debugPrint('Therapist record created successfully');
 
-      // Navigate to home screen
+      // Show success message
+      if (mounted) {
+        _showMessage('Profile saved successfully!', isError: false);
+      }
+
+      // Wait a moment to show the success message
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // Navigate to therapist dashboard screen
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          CustomPageTransitions.fadeTransition<void>(const HomeScreen()),
+          CustomPageTransitions.fadeTransition<void>(
+            const TherapistDashboardScreen(),
+          ),
           (route) => false,
         );
       }
@@ -1022,6 +1034,75 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
           'updated_at': DateTime.now().toIso8601String(),
         })
         .eq('id', userId);
+
+    // Mark onboarding as complete - matching patient flow exactly
+    try {
+      // Check if onboarding record exists
+      final existingOnboarding = await Supabase.instance.client
+          .from('user_onboarding')
+          .select('id, onboarding_type, user_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      debugPrint('Existing onboarding record: $existingOnboarding');
+
+      if (existingOnboarding != null) {
+        // Update existing record
+        await Supabase.instance.client
+            .from('user_onboarding')
+            .update({
+              'current_step': 'completed',
+              'progress_percentage': 100,
+              'onboarding_1_completed': true,
+              'onboarding_2_completed': true,
+              'onboarding_3_completed': true,
+              'onboarding_4_completed': true,
+              'completed_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('user_id', userId);
+      } else {
+        // Insert new record if it doesn't exist (fallback)
+        await Supabase.instance.client.from('user_onboarding').insert({
+          'user_id': userId,
+          'onboarding_type': 'therapist',
+          'current_step': 'completed',
+          'progress_percentage': 100,
+          'user_type_selected': true,
+          'account_created': true,
+          'onboarding_1_completed': true,
+          'onboarding_2_completed': true,
+          'onboarding_3_completed': true,
+          'onboarding_4_completed': true,
+          'completed_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      }
+    } catch (onboardingError) {
+      debugPrint('Error with onboarding record: $onboardingError');
+      // Try to create the record as a fallback
+      try {
+        await Supabase.instance.client.from('user_onboarding').insert({
+          'user_id': userId,
+          'onboarding_type': 'therapist',
+          'current_step': 'completed',
+          'progress_percentage': 100,
+          'user_type_selected': true,
+          'account_created': true,
+          'onboarding_1_completed': true,
+          'onboarding_2_completed': true,
+          'onboarding_3_completed': true,
+          'onboarding_4_completed': true,
+          'completed_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      } catch (insertError) {
+        debugPrint('Failed to insert onboarding record: $insertError');
+        throw Exception('Could not create onboarding record: $insertError');
+      }
+    }
   }
 
   void _showMessage(String message, {bool isError = true}) {

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 import 'patient_dashboard_screen.dart';
+import 'therapist_dashboard_screen.dart';
 import 'patient_details_screen.dart';
 import 'therapist_details_screen.dart';
 import '../utils/page_transitions.dart';
@@ -165,6 +166,12 @@ class _SplashScreenState extends State<SplashScreen>
             Navigator.of(context).pushReplacement(
               CustomPageTransitions.fadeTransition<void>(
                 PatientDashboardScreen(),
+              ),
+            );
+          } else if (userRole == 'therapist') {
+            Navigator.of(context).pushReplacement(
+              CustomPageTransitions.fadeTransition<void>(
+                TherapistDashboardScreen(),
               ),
             );
           } else {

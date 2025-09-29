@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
 import '../models/onboarding_data.dart';
 import 'patient_details_screen.dart';
+import 'login_screen.dart';
 
 class PatientOnboardingScreen extends StatefulWidget {
   const PatientOnboardingScreen({super.key});
@@ -88,8 +89,8 @@ class _PatientOnboardingScreenState extends State<PatientOnboardingScreen> {
             await Supabase.instance.client
                 .from('user_onboarding')
                 .update({
-                  'current_step': 'onboarding_4',
-                  'progress_percentage': 75,
+                  'current_step': 'details_screen',
+                  'progress_percentage': 85,
                   'user_type_selected': true,
                   'account_created': true,
                   'onboarding_1_completed': true,
@@ -104,8 +105,8 @@ class _PatientOnboardingScreenState extends State<PatientOnboardingScreen> {
             await Supabase.instance.client.from('user_onboarding').insert({
               'user_id': user.id,
               'onboarding_type': 'patient',
-              'current_step': 'onboarding_4',
-              'progress_percentage': 75,
+              'current_step': 'details_screen',
+              'progress_percentage': 85,
               'user_type_selected': true,
               'account_created': true,
               'onboarding_1_completed': true,
@@ -129,6 +130,123 @@ class _PatientOnboardingScreenState extends State<PatientOnboardingScreen> {
       Navigator.of(context).pushReplacement(
         CustomPageTransitions.fadeTransition<void>(PatientDetailsScreen()),
       );
+    }
+  }
+
+  void _showExitOptions() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Icon(
+              Icons.warning_amber_rounded,
+              size: 48,
+              color: Color(0xFFF59E0B),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Complete Setup Later?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'You can finish setting up your patient profile anytime. What would you like to do?',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF6B7280),
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+
+            // Cancel Setup Button
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () => _cancelSignup(),
+                icon: const Icon(Icons.pause_circle_outline),
+                label: const Text('Cancel Setup & Sign Out'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B7280),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Continue Button
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text('Continue Setup'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF10B981),
+                  side: const BorderSide(color: Color(0xFF10B981)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _cancelSignup() async {
+    Navigator.pop(context); // Close the modal
+
+    try {
+      await Supabase.instance.client.auth.signOut();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          CustomPageTransitions.slideFromRight<void>(const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error signing out: $e');
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          CustomPageTransitions.slideFromRight<void>(const LoginScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 
@@ -200,21 +318,25 @@ class _PatientOnboardingScreenState extends State<PatientOnboardingScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: currentPage < onboardingData.length - 1
-                        ? () => _pageController.animateToPage(
-                            onboardingData.length - 1,
-                            duration: Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          )
-                        : null,
-                    child: Text(
-                      'Skip',
-                      style: TextStyle(
-                        color: currentPage < onboardingData.length - 1
-                            ? Color(0xFF6B7280)
-                            : Colors.transparent,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                    onTap: _showExitOptions,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.more_horiz,
+                        color: Color(0xFF6B7280),
+                        size: 20,
                       ),
                     ),
                   ),

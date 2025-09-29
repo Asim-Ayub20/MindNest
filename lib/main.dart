@@ -9,6 +9,7 @@ import 'screens/home_screen.dart';
 import 'screens/patient_dashboard_screen.dart';
 import 'screens/patient_onboarding_screen.dart';
 import 'screens/patient_details_screen.dart';
+import 'screens/therapist_dashboard_screen.dart';
 import 'screens/therapist_onboarding_screen.dart';
 import 'screens/therapist_details_screen.dart';
 import 'screens/password_reset_screen.dart';
@@ -347,8 +348,16 @@ class _MindNestAppState extends State<MindNestApp> {
               ),
               (route) => false,
             );
+          } else if (userRole == 'therapist') {
+            // For therapists, use the TherapistDashboardScreen
+            Navigator.of(context).pushAndRemoveUntil(
+              CustomPageTransitions.fadeTransition<void>(
+                TherapistDashboardScreen(),
+              ),
+              (route) => false,
+            );
           } else {
-            // For therapists and admins, use the existing HomeScreen
+            // For admins and other roles, use the existing HomeScreen
             Navigator.of(context).pushAndRemoveUntil(
               CustomPageTransitions.fadeTransition<void>(HomeScreen()),
               (route) => false,
@@ -369,6 +378,13 @@ class _MindNestAppState extends State<MindNestApp> {
           Navigator.of(context).pushAndRemoveUntil(
             CustomPageTransitions.fadeTransition<void>(
               PatientDashboardScreen(),
+            ),
+            (route) => false,
+          );
+        } else if (userRole == 'therapist') {
+          Navigator.of(context).pushAndRemoveUntil(
+            CustomPageTransitions.fadeTransition<void>(
+              TherapistDashboardScreen(),
             ),
             (route) => false,
           );

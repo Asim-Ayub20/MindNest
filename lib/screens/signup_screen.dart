@@ -4,7 +4,7 @@ import '../utils/page_transitions.dart';
 import '../utils/ui_helpers.dart';
 import 'patient_onboarding_screen.dart';
 import 'therapist_onboarding_screen.dart';
-import 'email_verification_screen.dart';
+import 'email_verification_flow_screen.dart';
 import '../utils/logo_widget.dart';
 import '../widgets/shared_password_input.dart';
 
@@ -102,7 +102,7 @@ class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
           if (mounted) {
             Navigator.of(context).pushReplacement(
               CustomPageTransitions.slideFromRight<void>(
-                EmailVerificationScreen(
+                EmailVerificationFlowScreen(
                   email: emailController.text.trim(),
                   userType: widget.userType,
                 ),

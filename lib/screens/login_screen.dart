@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
 import '../utils/ui_helpers.dart';
 import 'simple_password_reset_screen.dart';
-import 'email_verification_screen.dart';
+import 'email_verification_flow_screen.dart';
 import '../utils/logo_widget.dart';
 import '../utils/input_validators.dart';
 
@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
             if (mounted) {
               Navigator.of(context).pushReplacement(
                 CustomPageTransitions.slideFromRight<void>(
-                  EmailVerificationScreen(
+                  EmailVerificationFlowScreen(
                     email: emailController.text.trim(),
                     userType: role,
                   ),
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
             if (mounted) {
               Navigator.of(context).pushReplacement(
                 CustomPageTransitions.slideFromRight<void>(
-                  EmailVerificationScreen(
+                  EmailVerificationFlowScreen(
                     email: emailController.text.trim(),
                     userType: profile['role'] ?? 'patient',
                   ),
@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
             if (mounted) {
               Navigator.of(context).pushReplacement(
                 CustomPageTransitions.slideFromRight<void>(
-                  EmailVerificationScreen(
+                  EmailVerificationFlowScreen(
                     email: emailController.text.trim(),
                     userType: 'patient', // Default fallback
                   ),

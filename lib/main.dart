@@ -13,7 +13,7 @@ import 'screens/therapist_dashboard_screen.dart';
 import 'screens/therapist_onboarding_screen.dart';
 import 'screens/therapist_details_screen.dart';
 import 'screens/password_reset_screen.dart';
-import 'screens/email_verification_success_screen.dart';
+import 'screens/email_verification_flow_screen.dart';
 import 'utils/page_transitions.dart';
 import 'utils/app_theme.dart';
 
@@ -269,7 +269,7 @@ class _MindNestAppState extends State<MindNestApp> {
             if (context.mounted) {
               Navigator.of(context).pushAndRemoveUntil(
                 CustomPageTransitions.slideFromRight<void>(
-                  EmailVerificationSuccessScreen(
+                  EmailVerificationFlowScreen(
                     email: user.email ?? '',
                     userType: userRole,
                   ),

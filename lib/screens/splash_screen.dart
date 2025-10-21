@@ -105,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Start pulsing heart
     _heartController.repeat(reverse: true);
 
-    // Wait for a total of 3 seconds, then navigate
+    // Wait to show the splash screen for at least 2 seconds total
     await Future.delayed(Duration(milliseconds: 1300));
 
     // Stop pulsing and fade out
@@ -116,82 +116,104 @@ class _SplashScreenState extends State<SplashScreen>
     _navigateToNextScreen();
   }
 
-  void _navigateToNextScreen() async {
+  Future<void> _navigateToNextScreen() async {
     try {
       final session = Supabase.instance.client.auth.currentSession;
 
-      if (mounted) {
-        if (session != null) {
-          // Get user and check if they need to complete profile details
-          final user = session.user;
-          final userRole = user.userMetadata?['role'] ?? 'patient';
+      if (session != null) {
+        // Get user and check if they need to complete profile details
+        final user = session.user;
+        final userRole = user.userMetadata?['role'] ?? 'patient';
 
-          // Check if user has completed their profile details
-          if (userRole == 'patient') {
-            final patientDetails = await Supabase.instance.client
-                .from('patients')
-                .select('id')
-                .eq('id', user.id)
-                .maybeSingle();
+        // Parallel database queries for faster loading
+        final Future<Map<String, dynamic>?> patientFuture =
+            userRole == 'patient'
+            ? Supabase.instance.client
+                  .from('patients')
+                  .select('id')
+                  .eq('id', user.id)
+                  .maybeSingle()
+            : Future.value(null);
 
-            if (patientDetails == null) {
-              // Patient hasn't completed profile details
-              Navigator.of(context).pushReplacement(
-                CustomPageTransitions.slideFromRight<void>(
-                  PatientDetailsScreen(),
-                ),
-              );
-              return;
-            }
-          } else if (userRole == 'therapist') {
-            final therapistDetails = await Supabase.instance.client
-                .from('therapists')
-                .select('id')
-                .eq('id', user.id)
-                .maybeSingle();
+        final Future<Map<String, dynamic>?> therapistFuture =
+            userRole == 'therapist'
+            ? Supabase.instance.client
+                  .from('therapists')
+                  .select('id')
+                  .eq('id', user.id)
+                  .maybeSingle()
+            : Future.value(null);
 
-            if (therapistDetails == null) {
-              // Therapist hasn't completed profile details
-              Navigator.of(context).pushReplacement(
-                CustomPageTransitions.slideFromRight<void>(
-                  TherapistDetailsScreen(),
-                ),
-              );
-              return;
-            }
-          }
+        // Wait for data queries to complete (don't add extra delay here)
+        await Future.wait([
+          if (userRole == 'patient') patientFuture,
+          if (userRole == 'therapist') therapistFuture,
+        ]);
 
-          // User has completed profile, navigate to appropriate dashboard
-          if (userRole == 'patient') {
+        if (!mounted) return;
+
+        // Check results
+        if (userRole == 'patient') {
+          final patientDetails = await patientFuture;
+          if (!mounted) return;
+          if (patientDetails == null) {
+            // Patient hasn't completed profile details
             Navigator.of(context).pushReplacement(
-              CustomPageTransitions.fadeTransition<void>(
-                PatientDashboardScreen(),
+              CustomPageTransitions.slideFromRight<void>(
+                PatientDetailsScreen(),
               ),
             );
-          } else if (userRole == 'therapist') {
+            return;
+          }
+        } else if (userRole == 'therapist') {
+          final therapistDetails = await therapistFuture;
+          if (!mounted) return;
+          if (therapistDetails == null) {
+            // Therapist hasn't completed profile details
             Navigator.of(context).pushReplacement(
-              CustomPageTransitions.fadeTransition<void>(
-                TherapistDashboardScreen(),
+              CustomPageTransitions.slideFromRight<void>(
+                TherapistDetailsScreen(),
               ),
             );
-          } else {
-            Navigator.of(context).pushReplacement(
-              CustomPageTransitions.fadeTransition<void>(HomeScreen()),
-            );
+            return;
           }
+        }
+
+        if (!mounted) return;
+
+        // User has completed profile, navigate to appropriate dashboard
+        if (userRole == 'patient') {
+          Navigator.of(context).pushReplacement(
+            CustomPageTransitions.fadeTransition<void>(
+              PatientDashboardScreen(),
+            ),
+          );
+        } else if (userRole == 'therapist') {
+          Navigator.of(context).pushReplacement(
+            CustomPageTransitions.fadeTransition<void>(
+              TherapistDashboardScreen(),
+            ),
+          );
         } else {
           Navigator.of(context).pushReplacement(
-            CustomPageTransitions.slideFromRight<void>(LoginScreen()),
+            CustomPageTransitions.fadeTransition<void>(HomeScreen()),
           );
         }
+      } else {
+        // Wait minimum animation time before navigating to login
+        await Future.delayed(Duration(milliseconds: 800));
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          CustomPageTransitions.slideFromRight<void>(LoginScreen()),
+        );
       }
     } catch (e) {
       // If there's an error, navigate to login screen
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          CustomPageTransitions.fadeTransition<void>(LoginScreen()),
-        );
-      }
+      await Future.delayed(Duration(milliseconds: 800));
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        CustomPageTransitions.fadeTransition<void>(LoginScreen()),
+      );
     }
   }
 

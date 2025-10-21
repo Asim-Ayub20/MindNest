@@ -34,6 +34,8 @@ class LogoWidget extends StatelessWidget {
       child: Image.asset(
         assetPath,
         fit: BoxFit.contain,
+        cacheWidth: (size * 2).toInt(), // Cache at 2x for better quality
+        filterQuality: FilterQuality.medium, // Balance quality and performance
         errorBuilder: (context, error, stackTrace) {
           // Fallback to an icon if image fails to load
           return Icon(Icons.eco, color: Colors.white, size: size * 0.5);

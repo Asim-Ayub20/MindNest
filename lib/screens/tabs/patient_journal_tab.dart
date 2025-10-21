@@ -64,7 +64,7 @@ class PatientJournalTab extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -89,7 +89,7 @@ class PatientJournalTab extends StatelessWidget {
                         Text(
                           'Keep up the great work!',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 14,
                           ),
                         ),
@@ -110,7 +110,7 @@ class PatientJournalTab extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppTheme.warningColor.withOpacity(0.1),
+                        color: AppTheme.warningColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Icon(

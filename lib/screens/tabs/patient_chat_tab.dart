@@ -36,7 +36,7 @@ class PatientChatTab extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppTheme.accentBlue.withOpacity(0.1),
+                        color: AppTheme.accentBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Icon(

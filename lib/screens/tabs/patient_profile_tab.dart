@@ -313,7 +313,7 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -330,7 +330,7 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(40),
                         border: Border.all(
-                          color: AppTheme.primaryGreen.withOpacity(0.3),
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -340,6 +340,10 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
                             ? Image.network(
                                 profilePicUrl,
                                 fit: BoxFit.cover,
+                                cacheWidth:
+                                    160, // Cache at 2x resolution (80 * 2)
+                                cacheHeight: 160,
+                                filterQuality: FilterQuality.medium,
                                 errorBuilder: (context, error, stackTrace) =>
                                     Container(
                                       color: AppTheme.primaryGreen,
@@ -388,7 +392,9 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryGreen.withOpacity(0.1),
+                              color: AppTheme.primaryGreen.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Text(
@@ -471,9 +477,11 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: AppTheme.errorColor.withOpacity(0.1),
+              color: AppTheme.errorColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.errorColor.withOpacity(0.2)),
+              border: Border.all(
+                color: AppTheme.errorColor.withValues(alpha: 0.2),
+              ),
             ),
             child: InkWell(
               onTap: () => handleLogout(context),
@@ -517,7 +525,7 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(60),
                       border: Border.all(
-                        color: AppTheme.primaryGreen.withOpacity(0.3),
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                         width: 3,
                       ),
                     ),
@@ -529,6 +537,10 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
                           ? Image.network(
                               _patientData!['profile_pic_url'],
                               fit: BoxFit.cover,
+                              cacheWidth:
+                                  240, // Cache at 2x resolution (120 * 2)
+                              cacheHeight: 240,
+                              filterQuality: FilterQuality.medium,
                               errorBuilder: (context, error, stackTrace) =>
                                   Container(
                                     color: AppTheme.primaryGreen,
@@ -610,7 +622,7 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedGender,
+                initialValue: _selectedGender,
                 decoration: const InputDecoration(
                   labelText: 'Gender',
                   border: OutlineInputBorder(),
@@ -693,7 +705,7 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
             // Preferences
             _buildEditSection('Preferences', [
               DropdownButtonFormField<String>(
-                value: _selectedLanguage,
+                initialValue: _selectedLanguage,
                 decoration: const InputDecoration(
                   labelText: 'Preferred Language',
                   border: OutlineInputBorder(),
@@ -864,7 +876,7 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -897,7 +909,7 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

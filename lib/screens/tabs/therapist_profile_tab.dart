@@ -706,7 +706,7 @@ class _TherapistProfileTabState extends State<TherapistProfileTab> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedGender.isEmpty ? null : _selectedGender,
+          initialValue: _selectedGender.isEmpty ? null : _selectedGender,
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
@@ -757,7 +757,7 @@ class _TherapistProfileTabState extends State<TherapistProfileTab> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedAvailability,
+          initialValue: _selectedAvailability,
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFFF9FAFB),

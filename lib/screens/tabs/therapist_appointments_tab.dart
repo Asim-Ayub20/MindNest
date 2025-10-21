@@ -194,7 +194,7 @@ class _TherapistAppointmentsTabState extends State<TherapistAppointmentsTab>
         statusIcon = Icons.access_time;
         break;
       case 'cancelled':
-        statusColor = const Color(0xEF4444);
+        statusColor = const Color(0xFFEF4444);
         statusIcon = Icons.cancel;
         break;
       default:

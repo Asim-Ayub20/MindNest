@@ -23,15 +23,21 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Performance optimizations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
+  // Parallel initialization for faster startup
+  await Future.wait([
+    // Performance optimizations
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]),
+
+    // Initialize Supabase
+    _initializeSupabase(),
   ]);
 
-  // Set system UI overlay style
+  // Set system UI overlay style (non-async, can be done separately)
   SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
+    const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.white,
@@ -39,21 +45,24 @@ void main() async {
     ),
   );
 
-  // Initialize Supabase with error handling
+  runApp(const MindNestApp());
+}
+
+Future<void> _initializeSupabase() async {
   try {
     await Supabase.initialize(
       url: 'https://yqhgsmrtxgfjuljazoie.supabase.co',
       anonKey:
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxaGdzbXJ0eGdmanVsamF6b2llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NTE2ODEsImV4cCI6MjA3NDEyNzY4MX0.Iny6UH4vjesqQyh4sDMcmV58XKgUXDeERImhlKJNcUk',
-      debug: false, // Set to false for release builds
+      debug: false,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+      ),
     );
     debugPrint('Supabase initialized successfully');
   } catch (e) {
     debugPrint('Supabase initialization error: $e');
-    // App will still launch but with limited functionality
   }
-
-  runApp(MindNestApp());
 }
 
 class MindNestApp extends StatefulWidget {

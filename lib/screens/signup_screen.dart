@@ -7,6 +7,7 @@ import 'therapist_onboarding_screen.dart';
 import 'email_verification_flow_screen.dart';
 import '../utils/logo_widget.dart';
 import '../widgets/shared_password_input.dart';
+import '../utils/input_validators.dart';
 
 class SignupScreen extends StatefulWidget {
   final String userType;
@@ -31,6 +32,13 @@ class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
         passwordController.text.isEmpty ||
         confirmPasswordController.text.isEmpty) {
       _showMessage('Please fill in all fields');
+      return;
+    }
+
+    // Validate email format
+    final emailValidation = InputValidators.validateEmail(emailController.text);
+    if (emailValidation != null) {
+      _showMessage(emailValidation);
       return;
     }
 

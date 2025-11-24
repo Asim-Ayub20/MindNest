@@ -74,11 +74,122 @@ class InputValidators {
       return 'Email is required';
     }
 
-    final trimmedValue = value.trim();
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    final trimmedValue = value.trim().toLowerCase();
+
+    // Check for spaces
+    if (trimmedValue.contains(' ')) {
+      return 'Email address cannot contain spaces';
+    }
+
+    // Check minimum length
+    if (trimmedValue.length < 5) {
+      return 'Email address is too short';
+    }
+
+    // Check maximum length
+    if (trimmedValue.length > 254) {
+      return 'Email address is too long';
+    }
+
+    // Comprehensive email regex that validates:
+    // - Local part: alphanumeric, dots, hyphens, underscores
+    // - Domain: alphanumeric with dots
+    // - TLD: at least 2 characters
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
 
     if (!emailRegex.hasMatch(trimmedValue)) {
       return 'Please enter a valid email address';
+    }
+
+    // Check for consecutive dots
+    if (trimmedValue.contains('..')) {
+      return 'Email address cannot contain consecutive dots';
+    }
+
+    // Check that local part (before @) doesn't start or end with a dot
+    final parts = trimmedValue.split('@');
+    if (parts.length != 2) {
+      return 'Please enter a valid email address';
+    }
+
+    final localPart = parts[0];
+    final domainPart = parts[1];
+
+    if (localPart.startsWith('.') || localPart.endsWith('.')) {
+      return 'Email address cannot start or end with a dot';
+    }
+
+    // Check that domain has at least one dot
+    if (!domainPart.contains('.')) {
+      return 'Please enter a valid email domain';
+    }
+
+    // Check that domain doesn't start or end with a dot or hyphen
+    if (domainPart.startsWith('.') ||
+        domainPart.endsWith('.') ||
+        domainPart.startsWith('-') ||
+        domainPart.endsWith('-')) {
+      return 'Please enter a valid email domain';
+    }
+
+    // Additional validation for ambiguous/suspicious patterns
+
+    // Local part must be at least 2 characters to avoid single-letter ambiguity
+    if (localPart.length < 2) {
+      return 'Email username must be at least 2 characters';
+    }
+
+    // Local part must contain at least one letter (not just numbers)
+    if (!RegExp(r'[a-zA-Z]').hasMatch(localPart)) {
+      return 'Email username must contain at least one letter';
+    }
+
+    // Split domain into parts (e.g., 'mail.google.com' -> ['mail', 'google', 'com'])
+    final domainParts = domainPart.split('.');
+
+    // Domain must have at least 2 parts (domain + TLD)
+    if (domainParts.length < 2) {
+      return 'Please enter a valid email domain';
+    }
+
+    // Get the main domain and TLD
+    final mainDomain = domainParts[domainParts.length - 2];
+    final tld = domainParts[domainParts.length - 1];
+
+    // Main domain must be at least 2 characters
+    if (mainDomain.length < 2) {
+      return 'Email domain name is too short';
+    }
+
+    // Main domain must contain at least one letter (not be all numbers)
+    if (!RegExp(r'[a-zA-Z]').hasMatch(mainDomain)) {
+      return 'Email domain must contain letters, not just numbers';
+    }
+
+    // TLD must be at least 2 characters (already checked by regex, but explicit)
+    if (tld.length < 2) {
+      return 'Email domain extension is too short';
+    }
+
+    // Reject single-letter main domains (like 't.com')
+    if (mainDomain.length == 1) {
+      return 'Email domain name is too short';
+    }
+
+    // Optional: Check against common valid TLDs to reduce typos
+    // This is a reasonable subset of popular TLDs
+    final commonTLDs = [
+      'com', 'org', 'net', 'edu', 'gov', 'mil', 'int',
+      'co', 'uk', 'us', 'ca', 'au', 'de', 'fr', 'jp', 'cn', 'in',
+      'io', 'pk', // Added Pakistan
+      'info', 'biz', 'name', 'pro', 'dev', 'app', 'tech',
+    ];
+
+    // If it's a two-part domain (like example.com), validate TLD more strictly
+    if (domainParts.length == 2 && !commonTLDs.contains(tld)) {
+      return 'Please enter a valid email domain extension';
     }
 
     return null;

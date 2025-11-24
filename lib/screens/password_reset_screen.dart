@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/ui_helpers.dart';
 import '../widgets/shared_password_input.dart';
+import '../utils/input_validators.dart';
 
 // Reset flow states
 enum ResetState { email, otp, newPassword, tokenReset }
@@ -65,15 +66,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
   }
 
   Future<void> sendPasswordReset() async {
-    if (emailController.text.isEmpty) {
-      _showMessage('Please enter your email address');
-      return;
-    }
-
-    if (!RegExp(
-      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-    ).hasMatch(emailController.text)) {
-      _showMessage('Please enter a valid email address');
+    // Validate email format
+    final emailValidation = InputValidators.validateEmail(emailController.text);
+    if (emailValidation != null) {
+      _showMessage(emailValidation);
       return;
     }
 

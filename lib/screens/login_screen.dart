@@ -26,6 +26,13 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Validate email format
+    final emailValidation = InputValidators.validateEmail(emailController.text);
+    if (emailValidation != null) {
+      _showMessage(emailValidation);
+      return;
+    }
+
     // Basic password validation for login (less strict for existing users)
     if (passwordController.text.length < 6) {
       _showMessage('Password must be at least 6 characters');

@@ -1,18 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/user_profile_helper.dart';
 
-class PatientHomeTab extends StatelessWidget {
+class PatientHomeTab extends StatefulWidget {
   const PatientHomeTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final userName =
-        user?.userMetadata?['full_name'] ??
-        user?.email?.split('@')[0] ??
-        'User';
+  State<PatientHomeTab> createState() => _PatientHomeTabState();
+}
 
+class _PatientHomeTabState extends State<PatientHomeTab> {
+  String? _userName;
+  bool _isLoadingUserName = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final firstName = await UserProfileHelper.getUserFirstName();
+      setState(() {
+        _userName = firstName;
+        _isLoadingUserName = false;
+      });
+    } catch (e) {
+      final user = Supabase.instance.client.auth.currentUser;
+      setState(() {
+        _userName = user?.email?.split('@')[0] ?? 'User';
+        _isLoadingUserName = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -20,7 +45,7 @@ class PatientHomeTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header Section with Welcome Message
-            _buildWelcomeHeader(userName),
+            _buildWelcomeHeader(),
             const SizedBox(height: 24),
 
             // Quick Actions
@@ -43,7 +68,7 @@ class PatientHomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildWelcomeHeader(String userName) {
+  Widget _buildWelcomeHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -70,7 +95,7 @@ class PatientHomeTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  userName,
+                  _isLoadingUserName ? 'User' : (_userName ?? 'User'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,

@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/user_profile_helper.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   Future<void> handleLogout(BuildContext context) async {
     try {
       await Supabase.instance.client.auth.signOut();
@@ -59,10 +65,17 @@ class HomeScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 16),
-            Text(
-              'Hello ${user?.email ?? 'User'}',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
+            FutureBuilder<String>(
+              future: UserProfileHelper.getUserDisplayName(),
+              builder: (context, snapshot) {
+                final displayName =
+                    snapshot.data ?? (user?.email?.split('@')[0] ?? 'User');
+                return Text(
+                  'Hello $displayName',
+                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  textAlign: TextAlign.center,
+                );
+              },
             ),
             SizedBox(height: 40),
             Card(

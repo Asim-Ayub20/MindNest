@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/user_profile_helper.dart';
 
 class TherapistHomeTab extends StatefulWidget {
   const TherapistHomeTab({super.key});
@@ -109,77 +110,85 @@ class _TherapistHomeTabState extends State<TherapistHomeTab> {
   }
 
   Widget _buildWelcomeHeader() {
-    final firstName = _therapistData?['first_name'] ?? 'Therapist';
-    final specializations =
-        (_therapistData?['specialization'] as List<dynamic>?)?.cast<String>() ??
-        [];
-    final primarySpecialization = specializations.isNotEmpty
-        ? specializations.first
-        : 'Mental Health Professional';
+    return FutureBuilder<String>(
+      future: UserProfileHelper.getUserFirstName(),
+      builder: (context, snapshot) {
+        final firstName =
+            snapshot.data ?? (_therapistData?['first_name'] ?? 'Therapist');
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF059669)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            backgroundImage: _therapistData?['profile_pic_url'] != null
-                ? NetworkImage(_therapistData!['profile_pic_url'])
-                : null,
-            child: _therapistData?['profile_pic_url'] == null
-                ? const Icon(Icons.person, color: Colors.white, size: 30)
-                : null,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Good ${_getTimeOfDayGreeting()}, Dr. $firstName',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  primarySpecialization,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Ready to help your patients today?',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
+        final specializations =
+            (_therapistData?['specialization'] as List<dynamic>?)
+                ?.cast<String>() ??
+            [];
+        final primarySpecialization = specializations.isNotEmpty
+            ? specializations.first
+            : 'Mental Health Professional';
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF10B981), Color(0xFF059669)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                backgroundImage: _therapistData?['profile_pic_url'] != null
+                    ? NetworkImage(_therapistData!['profile_pic_url'])
+                    : null,
+                child: _therapistData?['profile_pic_url'] == null
+                    ? const Icon(Icons.person, color: Colors.white, size: 30)
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Good ${_getTimeOfDayGreeting()}, Dr. $firstName',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      primarySpecialization,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Ready to help your patients today?',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

@@ -184,204 +184,232 @@ class _SignupScreenState extends State<SignupScreen> with SharedPasswordMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F7),
+      backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: ClampingScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 24.0),
+          padding: EdgeInsets.symmetric(horizontal: 32.0),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight:
                   MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).viewPadding.top -
-                  MediaQuery.of(context).viewPadding.bottom,
+                  MediaQuery.of(context).padding.top -
+                  MediaQuery.of(context).padding.bottom,
             ),
-            child: Column(
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.06),
-                // Logo with green background
-                LogoWidget(size: 80),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Logo
+                  Center(child: LogoWidget(size: 64)),
+                  SizedBox(height: 32),
 
-                // Welcome text
-                Text(
-                  widget.userType == 'patient'
-                      ? 'Join MindNest'
-                      : 'Become a Provider',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
+                  // Welcome text
+                  Text(
+                    widget.userType == 'patient'
+                        ? 'Join MindNest'
+                        : 'Become a Provider',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 8),
-                Text(
-                  widget.userType == 'patient'
-                      ? 'Begin your mental wellness journey today'
-                      : 'Help others on their mental wellness journey',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                  SizedBox(height: 8),
+                  Text(
+                    widget.userType == 'patient'
+                        ? 'Begin your mental wellness journey'
+                        : 'Help others on their wellness journey',
+                    style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 40),
 
-                // Sign Up Card
-                Container(
-                  padding: EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 20,
-                        offset: Offset(0, 4),
+                  // Email field
+                  Text(
+                    'Email',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      hintText: 'your.email@example.com',
+                      hintStyle: TextStyle(
+                        color: Color(0xFF9CA3AF),
+                        fontSize: 15,
                       ),
+                      prefixIcon: Icon(
+                        Icons.email_outlined,
+                        color: Color(0xFF6B7280),
+                        size: 20,
+                      ),
+                      filled: true,
+                      fillColor: Color(0xFFF9FAFB),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Color(0xFFE5E7EB),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Color(0xFFE5E7EB),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Color(0xFF10B981),
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  SizedBox(height: 20),
+
+                  // Password Input with Requirements
+                  SharedPasswordInput(
+                    passwordController: passwordController,
+                    confirmPasswordController: confirmPasswordController,
+                    isPasswordVisible: isPasswordVisible,
+                    isConfirmPasswordVisible: isConfirmPasswordVisible,
+                    onPasswordVisibilityToggle: () {
+                      setState(() {
+                        isPasswordVisible = !isPasswordVisible;
+                      });
+                    },
+                    onConfirmPasswordVisibilityToggle: () {
+                      setState(() {
+                        isConfirmPasswordVisible = !isConfirmPasswordVisible;
+                      });
+                    },
+                    passwordError: passwordError,
+                    onPasswordChanged: onPasswordChanged,
+                    onConfirmPasswordChanged: (_) {},
+                    passwordHint: 'Create a strong password',
+                    confirmPasswordHint: 'Confirm your password',
+                    showConfirmPassword: true,
+                  ),
+                  SizedBox(height: 24),
+
+                  // Create Account Button
+                  Container(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFF10B981).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : handleSignup,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: isLoading
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : Text(
+                              'Create Account',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                    ),
+                  ),
+                  SizedBox(height: 24),
+
+                  // Divider
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Color(0xFFE5E7EB))),
                     ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  SizedBox(height: 24),
+
+                  // Already have account link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        widget.userType == 'patient'
-                            ? 'Create Your Account'
-                            : 'Create Provider Account',
+                        'Already have an account? ',
                         style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1F2937),
-                        ),
-                      ),
-                      SizedBox(height: 24),
-
-                      // Email field
-                      Text(
-                        'Email',
-                        style: TextStyle(
+                          color: Color(0xFF6B7280),
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF374151),
                         ),
                       ),
-                      SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Color(0xFFE5E7EB)),
-                        ),
-                        child: TextField(
-                          controller: emailController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter your email',
-                            hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                      ),
-                      SizedBox(height: 20),
-
-                      // Password Input with Requirements
-                      SharedPasswordInput(
-                        passwordController: passwordController,
-                        confirmPasswordController: confirmPasswordController,
-                        isPasswordVisible: isPasswordVisible,
-                        isConfirmPasswordVisible: isConfirmPasswordVisible,
-                        onPasswordVisibilityToggle: () {
-                          setState(() {
-                            isPasswordVisible = !isPasswordVisible;
-                          });
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushReplacementNamed('/login');
                         },
-                        onConfirmPasswordVisibilityToggle: () {
-                          setState(() {
-                            isConfirmPasswordVisible =
-                                !isConfirmPasswordVisible;
-                          });
-                        },
-                        passwordError: passwordError,
-                        onPasswordChanged: onPasswordChanged,
-                        onConfirmPasswordChanged: (_) {},
-                        passwordHint: 'Create a strong password',
-                        confirmPasswordHint: 'Confirm your password',
-                        showConfirmPassword: true,
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Create Account Button
-                      Container(
-                        width: double.infinity,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF10B981), Color(0xFF059669)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: ElevatedButton(
-                          onPressed: isLoading ? null : handleSignup,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                        child: Text(
+                          'Sign In',
+                          style: TextStyle(
+                            color: Color(0xFF10B981),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
-                          child: isLoading
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  'Create Account',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-
-                // Already have account link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Already have an account? ',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      child: Text(
-                        'Sign In',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF10B981),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-              ],
+                  SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),

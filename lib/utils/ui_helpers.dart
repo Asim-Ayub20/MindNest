@@ -4,12 +4,23 @@ import 'app_theme.dart';
 /// Shared UI utility functions to eliminate code duplication
 class UIHelpers {
   /// Show a snackbar message with consistent styling
+  /// Auto-dismisses after 4 seconds (longer messages get more time)
+  /// Can be manually dismissed by swiping
   static void showMessage(
     BuildContext context,
     String message, {
     bool isError = true,
   }) {
     if (!Navigator.of(context).mounted) return;
+
+    // Clear any existing snackbars to prevent stacking
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    // Calculate duration based on message length (more text = more time to read)
+    // Base: 3 seconds, add 30ms per character, max 7 seconds
+    final baseDuration = 3;
+    final extraDuration = (message.length * 0.03).clamp(0, 4);
+    final totalDuration = (baseDuration + extraDuration).toInt();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -18,13 +29,9 @@ class UIHelpers {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
+        duration: Duration(seconds: totalDuration),
+        // Make it dismissible by tapping or swiping
+        dismissDirection: DismissDirection.horizontal,
       ),
     );
   }

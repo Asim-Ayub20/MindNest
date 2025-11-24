@@ -12,9 +12,14 @@ class HomeScreen extends StatelessWidget {
       }
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error logging out: $error')));
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error logging out: $error'),
+            duration: const Duration(seconds: 4),
+            dismissDirection: DismissDirection.horizontal,
+          ),
+        );
       }
     }
   }

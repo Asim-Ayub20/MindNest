@@ -901,10 +901,13 @@ class _TherapistProfileTabState extends State<TherapistProfileTab> {
           .eq('id', user.id);
 
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully!'),
             backgroundColor: AppTheme.primaryGreen,
+            duration: Duration(seconds: 4),
+            dismissDirection: DismissDirection.horizontal,
           ),
         );
 
@@ -918,10 +921,13 @@ class _TherapistProfileTabState extends State<TherapistProfileTab> {
     } catch (e) {
       debugPrint('Error saving profile: $e');
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating profile: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            dismissDirection: DismissDirection.horizontal,
           ),
         );
       }

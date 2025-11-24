@@ -222,6 +222,11 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
 
   void _showMessage(String message, {bool isError = true}) {
     if (!mounted) return;
+
+    // Clear any existing snackbars to prevent stacking
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    // Auto-dismiss after 4 seconds
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -229,6 +234,8 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
+        dismissDirection: DismissDirection.horizontal,
       ),
     );
   }
@@ -241,9 +248,14 @@ class _PatientProfileTabState extends State<PatientProfileTab> {
       }
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error logging out: $error')));
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error logging out: $error'),
+            duration: const Duration(seconds: 4),
+            dismissDirection: DismissDirection.horizontal,
+          ),
+        );
       }
     }
   }

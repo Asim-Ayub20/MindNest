@@ -1,0 +1,17 @@
+flutter_native_splash:
+  color: "#E0F2F1"
+  image: assets/images/splash_logo_v2.png
+  branding: assets/images/mindnest_dark.png
+  color_dark: "#102A43"
+  image_dark: assets/images/splash_logo_v2.png
+  branding_dark: assets/images/mindnest_light.png
+  android_12:
+    color: "#E0F2F1"
+    image: assets/images/splash_logo_v2.png
+    icon_background_color: "#E0F2F1"
+    branding: assets/images/mindnest_dark.png
+    color_dark: "#102A43"
+    image_dark: assets/images/splash_logo_v2.png
+    icon_background_color_dark: "#102A43"
+    branding_dark: assets/images/mindnest_light.png
+  web: false

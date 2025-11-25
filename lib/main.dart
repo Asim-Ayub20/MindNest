@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
-import 'screens/splash_screen.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'screens/login_screen.dart';
 import 'screens/user_type_selection_screen.dart';
 import 'screens/home_screen.dart';
@@ -21,7 +21,8 @@ import 'utils/app_theme.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   // Parallel initialization for faster startup
   await Future.wait([
@@ -74,12 +75,95 @@ class MindNestApp extends StatefulWidget {
 
 class _MindNestAppState extends State<MindNestApp> {
   late AppLinks _appLinks;
+  Widget? _initialScreen;
 
   @override
   void initState() {
     super.initState();
     _setupAuthListener();
     _initDeepLinks();
+    _determineInitialScreen();
+  }
+
+  Future<void> _determineInitialScreen() async {
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+
+      if (session != null) {
+        // Get user and check if they need to complete profile details
+        final user = session.user;
+        final userRole = user.userMetadata?['role'] ?? 'patient';
+
+        // Parallel database queries for faster loading
+        final Future<Map<String, dynamic>?> patientFuture =
+            userRole == 'patient'
+            ? Supabase.instance.client
+                  .from('patients')
+                  .select('id')
+                  .eq('id', user.id)
+                  .maybeSingle()
+            : Future.value(null);
+
+        final Future<Map<String, dynamic>?> therapistFuture =
+            userRole == 'therapist'
+            ? Supabase.instance.client
+                  .from('therapists')
+                  .select('id')
+                  .eq('id', user.id)
+                  .maybeSingle()
+            : Future.value(null);
+
+        // Wait for data queries to complete
+        await Future.wait([
+          if (userRole == 'patient') patientFuture,
+          if (userRole == 'therapist') therapistFuture,
+        ]);
+
+        if (!mounted) return;
+
+        // Check results
+        if (userRole == 'patient') {
+          final patientDetails = await patientFuture;
+          if (patientDetails == null) {
+            // Patient hasn't completed profile details
+            setState(() {
+              _initialScreen = PatientDetailsScreen();
+            });
+          } else {
+            setState(() {
+              _initialScreen = PatientDashboardScreen();
+            });
+          }
+        } else if (userRole == 'therapist') {
+          final therapistDetails = await therapistFuture;
+          if (therapistDetails == null) {
+            // Therapist hasn't completed profile details
+            setState(() {
+              _initialScreen = TherapistDetailsScreen();
+            });
+          } else {
+            setState(() {
+              _initialScreen = TherapistDashboardScreen();
+            });
+          }
+        } else {
+          setState(() {
+            _initialScreen = HomeScreen();
+          });
+        }
+      } else {
+        setState(() {
+          _initialScreen = LoginScreen();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error determining initial screen: $e');
+      setState(() {
+        _initialScreen = LoginScreen();
+      });
+    } finally {
+      FlutterNativeSplash.remove();
+    }
   }
 
   void _initDeepLinks() async {
@@ -416,18 +500,25 @@ class _MindNestAppState extends State<MindNestApp> {
 
   @override
   Widget build(BuildContext context) {
+    // If initial screen is not determined yet, show a placeholder (native splash is still visible)
+    if (_initialScreen == null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(backgroundColor: Color(0xFF047857)),
+      );
+    }
+
     return MaterialApp(
       title: 'MindNest',
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: SplashScreen(),
+      home: _initialScreen,
       routes: {
         '/login': (context) => LoginScreen(),
         '/signup': (context) => UserTypeSelectionScreen(),
         '/home': (context) => HomeScreen(),
         '/patient-dashboard': (context) => PatientDashboardScreen(),
-        '/splash': (context) => SplashScreen(),
         '/reset-password': (context) => PasswordResetScreen(),
       },
     );

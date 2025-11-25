@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/utils/user_profile_helper.dart';
+import 'package:mindnest_app/utils/user_profile_helper.dart';
 
 void main() {
   group('UserProfileHelper Tests', () {

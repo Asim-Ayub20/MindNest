@@ -41,6 +41,7 @@ dependencies:
   dropdown_search: ^6.0.2
   country_picker: ^2.0.26
   app_links: ^6.3.2
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:

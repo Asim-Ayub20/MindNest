@@ -871,9 +871,6 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
       'consultation_fee': int.tryParse(_consultationFeeController.text.trim()),
       'availability': {'schedule': _selectedAvailability},
       'profile_pic_url': profilePicUrl,
-      'is_verified': false, // Default to false until admin verifies
-      'rating': 0.0,
-      'review_count': 0,
       'created_at': DateTime.now().toIso8601String(),
       'updated_at': DateTime.now().toIso8601String(),
     };

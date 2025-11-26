@@ -126,101 +126,76 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      appBar: AppBar(
-        title: const Text('Complete Your Profile'),
-        backgroundColor: const Color(0xFF10B981),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      backgroundColor: Colors.white,
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF10B981)),
             )
           : SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 16.0,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Welcome message
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                      // Header
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Complete Your Profile',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F2937),
+                          letterSpacing: -0.5,
                         ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.person_add,
-                              size: 48,
-                              color: Color(0xFF10B981),
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Welcome to MindNest!',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1F2937),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Let\'s complete your profile to personalize your experience and connect you with the right support.',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Color(0xFF6B7280),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Tell us a bit about yourself to get started',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF6B7280),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 40),
 
                       // Profile Picture Section
-                      _buildProfilePictureSection(),
-                      const SizedBox(height: 24),
+                      Center(child: _buildProfilePictureSection()),
+                      const SizedBox(height: 48),
 
                       // Personal Details Section
                       _buildSectionTitle('Personal Details'),
-                      const SizedBox(height: 16),
-                      _buildPersonalDetailsSection(),
                       const SizedBox(height: 24),
+                      _buildPersonalDetailsSection(),
+                      const SizedBox(height: 32),
 
                       // Contact Information Section
                       _buildSectionTitle('Contact Information'),
-                      const SizedBox(height: 16),
-                      _buildContactSection(),
                       const SizedBox(height: 24),
+                      _buildContactSection(),
+                      const SizedBox(height: 32),
 
                       // Preferences Section
                       _buildSectionTitle('Preferences'),
-                      const SizedBox(height: 16),
-                      _buildPreferencesSection(),
                       const SizedBox(height: 24),
+                      _buildPreferencesSection(),
+                      const SizedBox(height: 32),
 
                       // Emergency Contact Section
                       _buildSectionTitle('Emergency Contact'),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       _buildEmergencyContactSection(),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 48),
 
                       // Submit Button
                       _buildSubmitButton(),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 32),
                     ],
                   ),
                 ),
@@ -230,204 +205,180 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF1F2937),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          height: 1,
+          color: const Color(0xFFE5E7EB),
+        ),
+      ],
     );
   }
 
   Widget _buildProfilePictureSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFF3F4F6),
-                border: Border.all(color: const Color(0xFF10B981), width: 3),
-              ),
-              child: _profileImage != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(60),
-                      child: Image.file(
-                        _profileImage!,
-                        fit: BoxFit.cover,
-                        width: 120,
-                        height: 120,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.add_a_photo,
-                      size: 40,
-                      color: Color(0xFF10B981),
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: _pickImage,
+          child: Stack(
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFF3F4F6),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-            ),
+                  ],
+                  image: _profileImage != null
+                      ? DecorationImage(
+                          image: FileImage(_profileImage!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: _profileImage == null
+                    ? const Icon(
+                        Icons.person,
+                        size: 60,
+                        color: Color(0xFF9CA3AF),
+                      )
+                    : null,
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            _profileImage != null
-                ? 'Tap to change photo'
-                : 'Add Profile Picture (Optional)',
-            style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Upload Profile Photo',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF6B7280),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildPersonalDetailsSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          NameInputField(
-            controller: _firstNameController,
-            label: 'First Name',
-            hintText: 'Enter your first name',
-          ),
-          const SizedBox(height: 20),
-          NameInputField(
-            controller: _lastNameController,
-            label: 'Last Name',
-            hintText: 'Enter your last name',
-          ),
-          const SizedBox(height: 20),
-          _buildDateField(),
-          const SizedBox(height: 20),
-          _buildGenderDropdown(),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        NameInputField(
+          controller: _firstNameController,
+          label: 'First Name',
+          hintText: 'Enter your first name',
+        ),
+        const SizedBox(height: 20),
+        NameInputField(
+          controller: _lastNameController,
+          label: 'Last Name',
+          hintText: 'Enter your last name',
+        ),
+        const SizedBox(height: 20),
+        _buildDateField(),
+        const SizedBox(height: 20),
+        _buildGenderDropdown(),
+      ],
     );
   }
 
   Widget _buildContactSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          PhoneInputField(
-            controller: _phoneController,
-            label: 'Phone Number',
-            hintText: 'Enter your phone number',
-          ),
-          const SizedBox(height: 20),
-          LocationSelector(
-            initialCountry: _selectedCountry,
-            initialCity: _selectedCity,
-            onLocationChanged: (country, city) {
-              setState(() {
-                _selectedCountry = country;
-                _selectedCity = city;
-              });
-            },
-            validator: (value) {
-              if (_selectedCountry == null || _selectedCity == null) {
-                return 'Please select both country and city';
-              }
-              return null;
-            },
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        PhoneInputField(
+          controller: _phoneController,
+          label: 'Phone Number',
+          hintText: 'Enter your phone number',
+        ),
+        const SizedBox(height: 20),
+        LocationSelector(
+          initialCountry: _selectedCountry,
+          initialCity: _selectedCity,
+          onLocationChanged: (country, city) {
+            setState(() {
+              _selectedCountry = country;
+              _selectedCity = city;
+            });
+          },
+          validator: (value) {
+            if (_selectedCountry == null || _selectedCity == null) {
+              return 'Please select both country and city';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildPreferencesSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: _buildLanguageDropdown(),
-    );
+    return _buildLanguageDropdown();
   }
 
   Widget _buildEmergencyContactSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          NameInputField(
-            controller: _emergencyFirstNameController,
-            label: 'Emergency Contact First Name',
-            hintText: 'Enter emergency contact first name',
-          ),
-          const SizedBox(height: 20),
-          NameInputField(
-            controller: _emergencyLastNameController,
-            label: 'Emergency Contact Last Name',
-            hintText: 'Enter emergency contact last name',
-          ),
-          const SizedBox(height: 20),
-          PhoneInputField(
-            controller: _emergencyPhoneController,
-            label: 'Emergency Contact Phone',
-            hintText: 'Enter emergency contact phone',
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        NameInputField(
+          controller: _emergencyFirstNameController,
+          label: 'Emergency Contact First Name',
+          hintText: 'Enter first name',
+        ),
+        const SizedBox(height: 20),
+        NameInputField(
+          controller: _emergencyLastNameController,
+          label: 'Emergency Contact Last Name',
+          hintText: 'Enter last name',
+        ),
+        const SizedBox(height: 20),
+        PhoneInputField(
+          controller: _emergencyPhoneController,
+          label: 'Emergency Contact Phone',
+          hintText: 'Enter phone number',
+        ),
+      ],
     );
   }
 
@@ -439,7 +390,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           'Date of Birth',
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Color(0xFF374151),
           ),
         ),
@@ -447,7 +398,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         GestureDetector(
           onTap: _selectDate,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               border: Border.all(color: const Color(0xFFE5E7EB)),
@@ -461,7 +412,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                         ? DateFormat('MMMM d, yyyy').format(_dateOfBirth!)
                         : 'Select your date of birth',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       color: _dateOfBirth != null
                           ? const Color(0xFF1F2937)
                           : const Color(0xFF9CA3AF),
@@ -469,8 +420,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                   ),
                 ),
                 const Icon(
-                  Icons.calendar_today,
-                  color: Color(0xFF10B981),
+                  Icons.calendar_today_outlined,
+                  color: Color(0xFF6B7280),
                   size: 20,
                 ),
               ],
@@ -479,7 +430,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         ),
         if (_dateOfBirth == null)
           const Padding(
-            padding: EdgeInsets.only(top: 8),
+            padding: EdgeInsets.only(top: 6),
             child: Text(
               'Date of birth is required',
               style: TextStyle(fontSize: 12, color: Colors.red),
@@ -497,7 +448,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           'Gender',
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Color(0xFF374151),
           ),
         ),
@@ -506,7 +457,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           initialValue: _selectedGender.isEmpty ? null : _selectedGender,
           decoration: InputDecoration(
             hintText: 'Select your gender',
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
             border: OutlineInputBorder(
@@ -523,7 +474,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 12,
+              vertical: 14,
             ),
           ),
           validator: (value) {
@@ -553,7 +504,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           'Preferred Language',
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Color(0xFF374151),
           ),
         ),
@@ -577,7 +528,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 12,
+              vertical: 14,
             ),
           ),
           items: _languageOptions.map((language) {
@@ -597,28 +548,51 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   }
 
   Widget _buildSubmitButton() {
-    return ElevatedButton(
-      onPressed: _isSubmitting ? null : _submitForm,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF10B981),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF059669)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: _isSubmitting
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitForm,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : const Text(
+                'Save & Continue',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
               ),
-            )
-          : const Text(
-              'Save & Continue',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+      ),
     );
   }
 
@@ -710,7 +684,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
       }
 
       // Wait a moment to show the success message
-      await Future.delayed(Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 500));
 
       // Navigate to patient dashboard
       if (mounted) {
@@ -801,78 +775,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         .from('profiles')
         .update(profileData)
         .eq('id', userId);
-
-    debugPrint('Successfully updated profiles table');
-
-    // Check if user_onboarding record exists, and create/update it properly
-    try {
-      final existingOnboarding = await Supabase.instance.client
-          .from('user_onboarding')
-          .select('id, onboarding_type, user_id')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      debugPrint('Existing onboarding record: $existingOnboarding');
-
-      if (existingOnboarding != null) {
-        // Update existing record
-        await Supabase.instance.client
-            .from('user_onboarding')
-            .update({
-              'current_step': 'completed',
-              'progress_percentage': 100,
-              'onboarding_1_completed': true,
-              'onboarding_2_completed': true,
-              'onboarding_3_completed': true,
-              'onboarding_4_completed': true,
-              'completed_at': DateTime.now().toIso8601String(),
-              'updated_at': DateTime.now().toIso8601String(),
-            })
-            .eq('user_id', userId);
-      } else {
-        // Insert new record if it doesn't exist (fallback)
-        await Supabase.instance.client.from('user_onboarding').insert({
-          'user_id': userId,
-          'onboarding_type': 'patient',
-          'current_step': 'completed',
-          'progress_percentage': 100,
-          'user_type_selected': true,
-          'account_created': true,
-          'onboarding_1_completed': true,
-          'onboarding_2_completed': true,
-          'onboarding_3_completed': true,
-          'onboarding_4_completed': true,
-          'completed_at': DateTime.now().toIso8601String(),
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-      }
-    } catch (onboardingError) {
-      debugPrint('Error with onboarding record: $onboardingError');
-      // Try to create the record as a fallback
-      try {
-        await Supabase.instance.client.from('user_onboarding').insert({
-          'user_id': userId,
-          'onboarding_type': 'patient',
-          'current_step': 'completed',
-          'progress_percentage': 100,
-          'user_type_selected': true,
-          'account_created': true,
-          'onboarding_1_completed': true,
-          'onboarding_2_completed': true,
-          'onboarding_3_completed': true,
-          'onboarding_4_completed': true,
-          'completed_at': DateTime.now().toIso8601String(),
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-      } catch (insertError) {
-        debugPrint('Failed to insert onboarding record: $insertError');
-        throw Exception('Could not create onboarding record: $insertError');
-      }
-    }
-
-    debugPrint('Successfully updated onboarding progress to 100%');
   }
 
   void _showMessage(String message, {bool isError = true}) {

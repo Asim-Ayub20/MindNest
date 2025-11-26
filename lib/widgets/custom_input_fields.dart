@@ -27,7 +27,7 @@ class NameInputField extends StatelessWidget {
           isRequired ? '$label *' : label,
           style: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Color(0xFF374151),
           ),
         ),
@@ -44,7 +44,7 @@ class NameInputField extends StatelessWidget {
           ],
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
             border: OutlineInputBorder(
@@ -69,7 +69,7 @@ class NameInputField extends StatelessWidget {
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 12,
+              vertical: 14,
             ),
             errorStyle: const TextStyle(
               fontSize: 12,
@@ -109,7 +109,7 @@ class PhoneInputField extends StatelessWidget {
           isRequired ? '$label *' : label,
           style: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Color(0xFF374151),
           ),
         ),
@@ -127,7 +127,7 @@ class PhoneInputField extends StatelessWidget {
           ],
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
             border: OutlineInputBorder(
@@ -152,7 +152,7 @@ class PhoneInputField extends StatelessWidget {
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 12,
+              vertical: 14,
             ),
             prefixIcon: const Icon(
               Icons.phone,
@@ -201,7 +201,7 @@ class NumberInputField extends StatelessWidget {
           isRequired ? '$label *' : label,
           style: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Color(0xFF374151),
           ),
         ),
@@ -216,7 +216,7 @@ class NumberInputField extends StatelessWidget {
           ],
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
             border: OutlineInputBorder(
@@ -241,7 +241,7 @@ class NumberInputField extends StatelessWidget {
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 12,
+              vertical: 14,
             ),
             suffixText: suffixText,
             suffixStyle: const TextStyle(

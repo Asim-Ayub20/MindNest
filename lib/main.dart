@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'config/supabase_config.dart';
 import 'screens/login_screen.dart';
 import 'screens/user_type_selection_screen.dart';
 import 'screens/home_screen.dart';
@@ -52,10 +54,9 @@ void main() async {
 Future<void> _initializeSupabase() async {
   try {
     await Supabase.initialize(
-      url: 'https://yqhgsmrtxgfjuljazoie.supabase.co',
-      anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxaGdzbXJ0eGdmanVsamF6b2llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NTE2ODEsImV4cCI6MjA3NDEyNzY4MX0.Iny6UH4vjesqQyh4sDMcmV58XKgUXDeERImhlKJNcUk',
-      debug: false,
+      url: SupabaseConfig.supabaseUrl,
+      anonKey: SupabaseConfig.supabaseAnonKey,
+      debug: SupabaseConfig.debugMode,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
       ),
@@ -76,6 +77,8 @@ class MindNestApp extends StatefulWidget {
 class _MindNestAppState extends State<MindNestApp> {
   late AppLinks _appLinks;
   Widget? _initialScreen;
+  StreamSubscription<Uri>? _linkSubscription;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
@@ -83,6 +86,13 @@ class _MindNestAppState extends State<MindNestApp> {
     _setupAuthListener();
     _initDeepLinks();
     _determineInitialScreen();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    _authSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _determineInitialScreen() async {
@@ -170,7 +180,7 @@ class _MindNestAppState extends State<MindNestApp> {
     _appLinks = AppLinks();
 
     // Handle deep links when app is already running
-    _appLinks.uriLinkStream.listen(
+    _linkSubscription = _appLinks.uriLinkStream.listen(
       (uri) {
         debugPrint('Deep link received while app running: $uri');
         _handleDeepLink(uri);
@@ -198,7 +208,7 @@ class _MindNestAppState extends State<MindNestApp> {
   void _handleDeepLink(Uri uri) {
     debugPrint('Handling deep link: $uri');
 
-    if (uri.scheme == 'io.supabase.mindnest') {
+    if (uri.scheme == SupabaseConfig.deepLinkScheme) {
       if (uri.host == 'login-callback') {
         // This is handled automatically by Supabase
         debugPrint('Email verification link detected');
@@ -211,7 +221,7 @@ class _MindNestAppState extends State<MindNestApp> {
 
   void _setupAuthListener() {
     // Listen for authentication state changes and handle navigation
-    Supabase.instance.client.auth.onAuthStateChange.listen(
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
       (data) async {
         final AuthChangeEvent event = data.event;
         final Session? session = data.session;

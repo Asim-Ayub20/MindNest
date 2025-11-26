@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/ui_helpers.dart';
@@ -34,6 +35,7 @@ class _EmailVerificationFlowScreenState
   late AnimationController _successAnimationController;
   late Animation<double> _successScaleAnimation;
   late Animation<double> _successFadeAnimation;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
@@ -61,12 +63,15 @@ class _EmailVerificationFlowScreenState
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _successAnimationController.dispose();
     super.dispose();
   }
 
   void _listenForVerification() {
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      data,
+    ) {
       if (data.event == AuthChangeEvent.signedIn &&
           data.session?.user.emailConfirmedAt != null) {
         debugPrint('Email verified successfully!');

@@ -2,16 +2,70 @@
 .dart_tool/
 .packages
 .pub-cache/
+.pub/
 build/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
 *.iml
+pubspec.lock
 
 # Android
 .android/
 .gradle/
 local.properties
+*.jks
+*.keystore
+key.properties
+
+# iOS/macOS
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+*sync/
+.sconsign.dblite
+.tags*
+Pods/
+.symlinks/
+
+# Environment & Secrets (IMPORTANT)
+.env
+.env.local
+.env.production
+*.secret
+secrets.json
 
 # VS Code/IDE
 .idea/
+.vscode/
 *.log
+*.swp
+*.swo
+*~
+
+# Test Coverage
+coverage/
+.test_coverage.dart
+
+# Web
+web/flutter_service_worker.js
+web/flutter_service_worker.js.map
+
+# Miscellaneous
+*.class
+*.lock
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# Exceptions (files to keep)
+!**/ios/**/default.mode1v3
+!**/ios/**/default.mode2v3
+!**/ios/**/default.pbxuser
+!**/ios/**/default.perspectivev3

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
 import '../utils/ui_helpers.dart';
-import 'simple_password_reset_screen.dart';
+import 'password_reset_screen.dart';
 import 'email_verification_flow_screen.dart';
 import '../utils/logo_widget.dart';
 import '../utils/input_validators.dart';
@@ -386,7 +386,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         Navigator.of(context).push(
                           CustomPageTransitions.slideFromRight<void>(
-                            SimplePasswordResetScreen(),
+                            PasswordResetScreen(),
                           ),
                         );
                       },

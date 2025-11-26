@@ -7,6 +7,8 @@ import '../utils/page_transitions.dart';
 import '../utils/ui_helpers.dart';
 import '../widgets/custom_input_fields.dart';
 import '../widgets/location_selector.dart';
+import '../widgets/section_title.dart';
+import '../widgets/custom_dropdown.dart';
 import 'patient_dashboard_screen.dart';
 
 class PatientDetailsScreen extends StatefulWidget {
@@ -170,25 +172,25 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                       const SizedBox(height: 48),
 
                       // Personal Details Section
-                      _buildSectionTitle('Personal Details'),
+                      const SectionTitle(title: 'Personal Details'),
                       const SizedBox(height: 24),
                       _buildPersonalDetailsSection(),
                       const SizedBox(height: 32),
 
                       // Contact Information Section
-                      _buildSectionTitle('Contact Information'),
+                      const SectionTitle(title: 'Contact Information'),
                       const SizedBox(height: 24),
                       _buildContactSection(),
                       const SizedBox(height: 32),
 
                       // Preferences Section
-                      _buildSectionTitle('Preferences'),
+                      const SectionTitle(title: 'Preferences'),
                       const SizedBox(height: 24),
                       _buildPreferencesSection(),
                       const SizedBox(height: 32),
 
                       // Emergency Contact Section
-                      _buildSectionTitle('Emergency Contact'),
+                      const SectionTitle(title: 'Emergency Contact'),
                       const SizedBox(height: 24),
                       _buildEmergencyContactSection(),
                       const SizedBox(height: 48),
@@ -201,28 +203,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 1,
-          color: const Color(0xFFE5E7EB),
-        ),
-      ],
     );
   }
 
@@ -320,7 +300,24 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         const SizedBox(height: 20),
         _buildDateField(),
         const SizedBox(height: 20),
-        _buildGenderDropdown(),
+        CustomDropdown<String>(
+          label: 'Gender',
+          value: _selectedGender.isEmpty ? null : _selectedGender,
+          items: _genderOptions,
+          itemLabelBuilder: (item) => item,
+          hintText: 'Select your gender',
+          onChanged: (value) {
+            setState(() {
+              _selectedGender = value ?? '';
+            });
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Gender is required';
+            }
+            return null;
+          },
+        ),
       ],
     );
   }
@@ -355,7 +352,18 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   }
 
   Widget _buildPreferencesSection() {
-    return _buildLanguageDropdown();
+    return CustomDropdown<String>(
+      label: 'Preferred Language',
+      value: _selectedLanguage,
+      items: _languageOptions,
+      itemLabelBuilder: (item) => item,
+      hintText: 'Select language',
+      onChanged: (value) {
+        setState(() {
+          _selectedLanguage = value ?? 'English';
+        });
+      },
+    );
   }
 
   Widget _buildEmergencyContactSection() {
@@ -436,113 +444,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
               style: TextStyle(fontSize: 12, color: Colors.red),
             ),
           ),
-      ],
-    );
-  }
-
-  Widget _buildGenderDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Gender',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _selectedGender.isEmpty ? null : _selectedGender,
-          decoration: InputDecoration(
-            hintText: 'Select your gender',
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Gender is required';
-            }
-            return null;
-          },
-          items: _genderOptions.map((gender) {
-            return DropdownMenuItem<String>(value: gender, child: Text(gender));
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedGender = value ?? '';
-            });
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLanguageDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Preferred Language',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _selectedLanguage,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-          ),
-          items: _languageOptions.map((language) {
-            return DropdownMenuItem<String>(
-              value: language,
-              child: Text(language),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedLanguage = value ?? 'English';
-            });
-          },
-        ),
       ],
     );
   }

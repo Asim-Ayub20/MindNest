@@ -8,6 +8,8 @@ import '../utils/ui_helpers.dart';
 import '../utils/input_validators.dart';
 import '../widgets/custom_input_fields.dart';
 import '../widgets/location_selector.dart';
+import '../widgets/section_title.dart';
+import '../widgets/custom_dropdown.dart';
 import 'therapist_dashboard_screen.dart';
 
 class TherapistDetailsScreen extends StatefulWidget {
@@ -203,37 +205,37 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
                       const SizedBox(height: 48),
 
                       // Personal Details Section
-                      _buildSectionTitle('Personal Information'),
+                      const SectionTitle(title: 'Personal Information'),
                       const SizedBox(height: 24),
                       _buildPersonalDetailsSection(),
                       const SizedBox(height: 32),
 
                       // Professional Details Section
-                      _buildSectionTitle('Professional Information'),
+                      const SectionTitle(title: 'Professional Information'),
                       const SizedBox(height: 24),
                       _buildProfessionalDetailsSection(),
                       const SizedBox(height: 32),
 
                       // Specialization Section
-                      _buildSectionTitle('Specializations'),
+                      const SectionTitle(title: 'Specializations'),
                       const SizedBox(height: 24),
                       _buildSpecializationSection(),
                       const SizedBox(height: 32),
 
                       // Experience Section
-                      _buildSectionTitle('Experience & Qualifications'),
+                      const SectionTitle(title: 'Experience & Qualifications'),
                       const SizedBox(height: 24),
                       _buildExperienceSection(),
                       const SizedBox(height: 32),
 
                       // About Section
-                      _buildSectionTitle('About You'),
+                      const SectionTitle(title: 'About You'),
                       const SizedBox(height: 24),
                       _buildAboutSection(),
                       const SizedBox(height: 32),
 
                       // Practice Details Section
-                      _buildSectionTitle('Practice Details'),
+                      const SectionTitle(title: 'Practice Details'),
                       const SizedBox(height: 24),
                       _buildPracticeDetailsSection(),
                       const SizedBox(height: 48),
@@ -246,28 +248,6 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 1,
-          color: const Color(0xFFE5E7EB),
-        ),
-      ],
     );
   }
 
@@ -363,7 +343,24 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
           hintText: 'Enter your last name',
         ),
         const SizedBox(height: 20),
-        _buildGenderDropdown(),
+        CustomDropdown<String>(
+          label: 'Gender',
+          value: _selectedGender.isEmpty ? null : _selectedGender,
+          items: _genderOptions,
+          itemLabelBuilder: (item) => item,
+          hintText: 'Select your gender',
+          onChanged: (value) {
+            setState(() {
+              _selectedGender = value ?? '';
+            });
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Gender is required';
+            }
+            return null;
+          },
+        ),
         const SizedBox(height: 20),
         PhoneInputField(
           controller: _phoneController,
@@ -682,105 +679,12 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
           validator: (value) => InputValidators.validateConsultationFee(value),
         ),
         const SizedBox(height: 20),
-        _buildAvailabilityDropdown(),
-      ],
-    );
-  }
-
-  Widget _buildGenderDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Gender',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _selectedGender.isEmpty ? null : _selectedGender,
-          decoration: InputDecoration(
-            hintText: 'Select your gender',
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Gender is required';
-            }
-            return null;
-          },
-          items: _genderOptions.map((gender) {
-            return DropdownMenuItem<String>(value: gender, child: Text(gender));
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedGender = value ?? '';
-            });
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAvailabilityDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Availability',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _selectedAvailability,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-          ),
-          items: _availabilityOptions.map((option) {
-            return DropdownMenuItem<String>(value: option, child: Text(option));
-          }).toList(),
+        CustomDropdown<String>(
+          label: 'Availability',
+          value: _selectedAvailability,
+          items: _availabilityOptions,
+          itemLabelBuilder: (item) => item,
+          hintText: 'Select availability',
           onChanged: (value) {
             setState(() {
               _selectedAvailability = value ?? 'Weekdays (9 AM - 5 PM)';

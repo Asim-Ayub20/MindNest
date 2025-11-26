@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/input_validators.dart';
+import '../utils/app_theme.dart';
 
 /// A comprehensive shared password input widget with validation and visual feedback
 /// Used across signup and password reset screens for complete consistency
@@ -49,15 +50,17 @@ class _SharedPasswordInputState extends State<SharedPasswordInput> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+            color: AppTheme.primaryText,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: AppTheme.backgroundColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(
+              color: AppTheme.lightText.withValues(alpha: 0.3),
+            ),
           ),
           child: TextField(
             controller: widget.passwordController,
@@ -65,22 +68,22 @@ class _SharedPasswordInputState extends State<SharedPasswordInput> {
             onChanged: widget.onPasswordChanged,
             decoration: InputDecoration(
               hintText: widget.passwordHint,
-              hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+              hintStyle: const TextStyle(color: AppTheme.lightText),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
               prefixIcon: const Icon(
                 Icons.lock_outline,
-                color: Color(0xFF9CA3AF),
+                color: AppTheme.lightText,
               ),
               suffixIcon: IconButton(
                 icon: Icon(
                   widget.isPasswordVisible
                       ? Icons.visibility
                       : Icons.visibility_off,
-                  color: const Color(0xFF9CA3AF),
+                  color: AppTheme.lightText,
                 ),
                 onPressed: widget.onPasswordVisibilityToggle,
               ),
@@ -102,15 +105,17 @@ class _SharedPasswordInputState extends State<SharedPasswordInput> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF374151),
+              color: AppTheme.primaryText,
             ),
           ),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
+              color: AppTheme.backgroundColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(
+                color: AppTheme.lightText.withValues(alpha: 0.3),
+              ),
             ),
             child: TextField(
               controller: widget.confirmPasswordController,
@@ -118,22 +123,22 @@ class _SharedPasswordInputState extends State<SharedPasswordInput> {
               onChanged: widget.onConfirmPasswordChanged,
               decoration: InputDecoration(
                 hintText: widget.confirmPasswordHint,
-                hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                hintStyle: const TextStyle(color: AppTheme.lightText),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 16,
+                  vertical: 14,
                 ),
                 prefixIcon: const Icon(
                   Icons.lock_outline,
-                  color: Color(0xFF9CA3AF),
+                  color: AppTheme.lightText,
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     widget.isConfirmPasswordVisible
                         ? Icons.visibility
                         : Icons.visibility_off,
-                    color: const Color(0xFF9CA3AF),
+                    color: AppTheme.lightText,
                   ),
                   onPressed: widget.onConfirmPasswordVisibilityToggle,
                 ),
@@ -168,11 +173,11 @@ class SharedPasswordRequirements extends StatelessWidget {
         color: passwordError == null && password.isNotEmpty
             ? const Color(0xFFF0FDF4) // Green background when valid
             : const Color(0xFFF0F9FF), // Blue background by default
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: passwordError == null && password.isNotEmpty
-              ? const Color(0xFFBBF7D0) // Green border when valid
-              : const Color(0xFFBFDBFE), // Blue border by default
+              ? AppTheme.primaryGreen.withValues(alpha: 0.3)
+              : AppTheme.accentBlue.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -185,8 +190,8 @@ class SharedPasswordRequirements extends StatelessWidget {
                     ? Icons.check_circle_outline
                     : Icons.info_outline,
                 color: passwordError == null && password.isNotEmpty
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFF3B82F6),
+                    ? AppTheme.primaryGreen
+                    : AppTheme.accentBlue,
                 size: 16,
               ),
               const SizedBox(width: 8),
@@ -196,7 +201,7 @@ class SharedPasswordRequirements extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
+                    color: AppTheme.primaryText,
                   ),
                 ),
               ),
@@ -245,7 +250,7 @@ class _SharedPasswordRequirementItem extends StatelessWidget {
         children: [
           Icon(
             isMet ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isMet ? const Color(0xFF10B981) : const Color(0xFF9CA3AF),
+            color: isMet ? AppTheme.primaryGreen : AppTheme.lightText,
             size: 12,
           ),
           const SizedBox(width: 6),
@@ -254,9 +259,7 @@ class _SharedPasswordRequirementItem extends StatelessWidget {
               requirement,
               style: TextStyle(
                 fontSize: 11,
-                color: isMet
-                    ? const Color(0xFF059669)
-                    : const Color(0xFF6B7280),
+                color: isMet ? AppTheme.darkGreen : AppTheme.secondaryText,
                 fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
               ),
             ),

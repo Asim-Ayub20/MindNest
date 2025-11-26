@@ -3,9 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/ui_helpers.dart';
 import '../widgets/shared_password_input.dart';
 import '../utils/input_validators.dart';
+import '../utils/app_theme.dart';
 
 // Reset flow states
-enum ResetState { email, otp, newPassword, tokenReset }
+enum ResetState { email, emailSent, tokenReset }
 
 class PasswordResetScreen extends StatefulWidget {
   final bool isFromDeepLink;
@@ -24,7 +25,7 @@ class PasswordResetScreen extends StatefulWidget {
 class _PasswordResetScreenState extends State<PasswordResetScreen>
     with SharedPasswordMixin {
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController otpController = TextEditingController();
+
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
@@ -88,57 +89,19 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
 
       await Supabase.instance.client.auth.resetPasswordForEmail(
         emailController.text.trim(),
+        redirectTo: 'io.supabase.mindnest://reset-password',
       );
 
       setState(() {
         userEmail = emailController.text.trim();
         maskedEmail = maskEmail(userEmail);
-        currentState = ResetState.otp;
+        currentState = ResetState.emailSent;
       });
 
       _showMessage(
-        'Password reset instructions sent to your email. Please check your email for a reset code.',
+        'Password reset link sent to your email. Please check your inbox.',
         isError: false,
       );
-    });
-  }
-
-  Future<void> verifyOTPAndResetPassword() async {
-    if (otpController.text.isEmpty) {
-      _showMessage('Please enter the verification code');
-      return;
-    }
-
-    final passwordValidationError =
-        SharedPasswordValidator.validatePasswordComplete(
-          newPasswordController.text,
-          confirmPasswordController.text,
-        );
-
-    if (passwordValidationError != null) {
-      _showMessage(passwordValidationError);
-      return;
-    }
-
-    await _handleAsyncOperation(() async {
-      final AuthResponse response = await Supabase.instance.client.auth
-          .verifyOTP(
-            token: otpController.text.trim(),
-            type: OtpType.recovery,
-            email: userEmail,
-          );
-
-      if (response.user != null) {
-        await Supabase.instance.client.auth.updateUser(
-          UserAttributes(password: newPasswordController.text),
-        );
-
-        _showMessage('Password updated successfully!', isError: false);
-
-        Future.delayed(Duration(seconds: 2), () {
-          if (mounted) Navigator.of(context).pop();
-        });
-      }
     });
   }
 
@@ -187,18 +150,21 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFFF9FAFB),
+        color: AppTheme.backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color(0xFFE5E7EB)),
+        border: Border.all(color: AppTheme.lightText.withValues(alpha: 0.3)),
       ),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+          hintStyle: const TextStyle(color: AppTheme.lightText),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          prefixIcon: Icon(prefixIcon, color: Color(0xFF9CA3AF)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          prefixIcon: Icon(prefixIcon, color: AppTheme.lightText),
         ),
         keyboardType: keyboardType,
         maxLength: maxLength,
@@ -219,22 +185,37 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
     required VoidCallback? onPressed,
     bool isLoading = false,
   }) {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 50,
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppTheme.primaryGradient,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF10B981),
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          disabledBackgroundColor: Color(0xFFE5E7EB),
+          disabledBackgroundColor: AppTheme.lightText.withValues(alpha: 0.3),
         ),
         child: isLoading
-            ? SizedBox(
+            ? const SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
@@ -244,7 +225,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
               )
             : Text(
                 text,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
       ),
     );
@@ -253,29 +237,24 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
   Widget _buildFieldLabel(String label) {
     return Text(
       label,
-      style: TextStyle(
-        fontSize: 14,
+      style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
+        color: AppTheme.primaryText,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF374151),
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF1F2937),
-      ),
-    );
+    return Text(title, style: AppTheme.lightTheme.textTheme.displayMedium);
   }
 
   Widget _buildSectionDescription(String description) {
     return Text(
       description,
-      style: TextStyle(fontSize: 16, color: Color(0xFF6B7280), height: 1.5),
+      style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+        color: AppTheme.secondaryText,
+        height: 1.5,
+      ),
     );
   }
 
@@ -314,7 +293,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
         ),
         SizedBox(height: 32),
         _buildStyledButton(
-          text: 'Send Reset Code',
+          text: 'Send Reset Link',
           onPressed: sendPasswordReset,
           isLoading: isLoading,
         ),
@@ -322,11 +301,11 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
     );
   }
 
-  Widget buildOTPStep() {
+  Widget buildEmailSentStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Verify Code'),
+        _buildSectionTitle('Check Your Email'),
         SizedBox(height: 12),
         RichText(
           text: TextSpan(
@@ -336,7 +315,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
               height: 1.5,
             ),
             children: [
-              TextSpan(text: 'We\'ve sent a verification code to '),
+              TextSpan(text: 'We\'ve sent a password reset link to '),
               TextSpan(
                 text: maskedEmail,
                 style: TextStyle(
@@ -344,60 +323,57 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
                   color: Color(0xFF10B981),
                 ),
               ),
-              TextSpan(text: '. Enter the code below to continue.'),
+              TextSpan(
+                text:
+                    '. Please click the link in the email to reset your password.',
+              ),
             ],
           ),
         ),
         SizedBox(height: 40),
-        _buildFieldLabel('Verification Code'),
-        SizedBox(height: 8),
-        _buildStyledTextField(
-          controller: otpController,
-          hintText: 'Enter 6-digit code',
-          prefixIcon: Icons.pin_outlined,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-        ),
-        SizedBox(height: 24),
-        SharedPasswordInput(
-          passwordController: newPasswordController,
-          confirmPasswordController: confirmPasswordController,
-          isPasswordVisible: isNewPasswordVisible,
-          isConfirmPasswordVisible: isConfirmPasswordVisible,
-          onPasswordVisibilityToggle: () =>
-              setState(() => isNewPasswordVisible = !isNewPasswordVisible),
-          onConfirmPasswordVisibilityToggle: () => setState(
-            () => isConfirmPasswordVisible = !isConfirmPasswordVisible,
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+            ),
           ),
-          passwordError: passwordError,
-          onPasswordChanged: (value) => validatePassword(value),
-          onConfirmPasswordChanged: (value) => setState(() {}),
-          passwordHint: 'Enter new password',
-          confirmPasswordHint: 'Confirm new password',
+          child: Row(
+            children: [
+              const Icon(
+                Icons.mark_email_read_outlined,
+                color: AppTheme.darkGreen,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'The link will expire in 1 hour. If you don\'t see it, check your spam folder.',
+                  style: TextStyle(color: AppTheme.darkGreen, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
         ),
         SizedBox(height: 32),
         _buildStyledButton(
-          text: 'Reset Password',
-          onPressed: verifyOTPAndResetPassword,
-          isLoading: isLoading,
+          text: 'Back to Login',
+          onPressed: () => Navigator.of(context).pop(),
+          isLoading: false,
         ),
         SizedBox(height: 20),
         Center(
           child: TextButton(
-            onPressed: isLoading
-                ? null
-                : () {
-                    setState(() {
-                      currentState = ResetState.email;
-                      otpController.clear();
-                      newPasswordController.clear();
-                      confirmPasswordController.clear();
-                    });
-                  },
+            onPressed: () {
+              setState(() {
+                currentState = ResetState.email;
+              });
+            },
             child: Text(
-              'Didn\'t receive the code? Try again',
+              'Wrong email? Try again',
               style: TextStyle(
-                color: Color(0xFF10B981),
+                color: AppTheme.primaryGreen,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -443,18 +419,24 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Color(0xFFF0F9FF),
+            color: const Color(0xFFF0F9FF),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFBAE6FD)),
+            border: Border.all(
+              color: AppTheme.accentBlue.withValues(alpha: 0.3),
+            ),
           ),
           child: Row(
             children: [
-              Icon(Icons.info_outline, color: Color(0xFF0369A1), size: 20),
-              SizedBox(width: 12),
-              Expanded(
+              const Icon(
+                Icons.info_outline,
+                color: AppTheme.darkBlue,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
                 child: Text(
                   'After updating your password, you\'ll be signed out and redirected to the login screen.',
-                  style: TextStyle(color: Color(0xFF0369A1), fontSize: 14),
+                  style: TextStyle(color: AppTheme.darkBlue, fontSize: 14),
                 ),
               ),
             ],
@@ -472,7 +454,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Color(0xFF374151)),
+          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryText),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -493,10 +475,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: Color(0xFF10B981),
+                          color: AppTheme.primaryGreen,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.email_outlined,
                           color: Colors.white,
                           size: 18,
@@ -507,28 +489,29 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
                           height: 2,
                           margin: EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
-                            color: currentState == ResetState.otp
-                                ? Color(0xFF10B981)
-                                : Color(0xFFE5E7EB),
+                            color: currentState == ResetState.emailSent
+                                ? AppTheme.primaryGreen
+                                : AppTheme.lightText.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(1),
                           ),
                         ),
                       ),
+
                       // Step 2
                       Container(
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: currentState == ResetState.otp
-                              ? Color(0xFF10B981)
-                              : Color(0xFFE5E7EB),
+                          color: currentState == ResetState.emailSent
+                              ? AppTheme.primaryGreen
+                              : AppTheme.lightText.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(
-                          Icons.lock_reset_outlined,
-                          color: currentState == ResetState.otp
+                          Icons.mark_email_read_outlined,
+                          color: currentState == ResetState.emailSent
                               ? Colors.white
-                              : Color(0xFF9CA3AF),
+                              : AppTheme.lightText,
                           size: 18,
                         ),
                       ),
@@ -539,8 +522,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
               // Current step content
               if (currentState == ResetState.email)
                 buildEmailStep()
-              else if (currentState == ResetState.otp)
-                buildOTPStep()
+              else if (currentState == ResetState.emailSent)
+                buildEmailSentStep()
               else if (currentState == ResetState.tokenReset)
                 buildTokenResetStep()
               else
@@ -555,7 +538,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
   @override
   void dispose() {
     emailController.dispose();
-    otpController.dispose();
+
     newPasswordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();

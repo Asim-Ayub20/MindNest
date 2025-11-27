@@ -31,7 +31,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.arrow_back, color: Colors.white),
@@ -50,7 +50,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.favorite_border, color: Colors.white),
@@ -96,7 +96,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
           end: Alignment.bottomCenter,
           colors: [
             AppTheme.primaryGreen,
-            AppTheme.primaryGreen.withOpacity(0.8),
+            AppTheme.primaryGreen.withValues(alpha: 0.8),
           ],
         ),
       ),
@@ -105,7 +105,9 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
           // Background pattern (optional)
           Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(color: Colors.black.withOpacity(0.1)),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.1),
+              ),
             ),
           ),
 
@@ -124,7 +126,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
                     border: Border.all(color: Colors.white, width: 4),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -198,7 +200,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -217,7 +219,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
           Container(
             height: 40,
             width: 1,
-            color: AppTheme.lightGreen.withOpacity(0.3),
+            color: AppTheme.lightGreen.withValues(alpha: 0.3),
           ),
           Expanded(
             child: _buildInfoItem(
@@ -230,7 +232,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
           Container(
             height: 40,
             width: 1,
-            color: AppTheme.lightGreen.withOpacity(0.3),
+            color: AppTheme.lightGreen.withValues(alpha: 0.3),
           ),
           Expanded(
             child: _buildInfoItem(
@@ -289,9 +291,11 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppTheme.accentBlue.withOpacity(0.1),
+              color: AppTheme.accentBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.accentBlue.withOpacity(0.3)),
+              border: Border.all(
+                color: AppTheme.accentBlue.withValues(alpha: 0.3),
+              ),
             ),
             child: Text(
               spec,
@@ -419,9 +423,9 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.lightGreen.withOpacity(0.1),
+          color: AppTheme.lightGreen.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.lightGreen.withOpacity(0.3)),
+          border: Border.all(color: AppTheme.lightGreen.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -450,9 +454,9 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.lightGreen.withOpacity(0.05),
+          color: AppTheme.lightGreen.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.lightGreen.withOpacity(0.2)),
+          border: Border.all(color: AppTheme.lightGreen.withValues(alpha: 0.2)),
         ),
         child: Column(
           children: [
@@ -490,7 +494,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -521,7 +525,7 @@ class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),

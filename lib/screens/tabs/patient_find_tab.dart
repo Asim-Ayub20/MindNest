@@ -215,7 +215,7 @@ class _PatientFindTabState extends State<PatientFindTab> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -252,7 +252,7 @@ class _PatientFindTabState extends State<PatientFindTab> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -384,7 +384,7 @@ class _PatientFindTabState extends State<PatientFindTab> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
+              color: Colors.red.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(50),
             ),
             child: const Icon(Icons.error_outline, size: 48, color: Colors.red),
@@ -432,7 +432,7 @@ class _PatientFindTabState extends State<PatientFindTab> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppTheme.lightGreen.withOpacity(0.1),
+              color: AppTheme.lightGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(50),
             ),
             child: Icon(

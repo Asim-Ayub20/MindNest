@@ -19,7 +19,7 @@ class TherapistCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 3,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
@@ -84,7 +84,7 @@ class TherapistCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.accentBlue.withOpacity(0.1),
+                        color: AppTheme.accentBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -193,9 +193,9 @@ class TherapistCard extends StatelessWidget {
       height: 60,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppTheme.lightGreen.withOpacity(0.1),
+        color: AppTheme.lightGreen.withValues(alpha: 0.1),
         border: Border.all(
-          color: AppTheme.lightGreen.withOpacity(0.3),
+          color: AppTheme.lightGreen.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -221,7 +221,7 @@ class TherapistCard extends StatelessWidget {
     return Icon(
       Icons.person,
       size: 30,
-      color: AppTheme.primaryGreen.withOpacity(0.6),
+      color: AppTheme.primaryGreen.withValues(alpha: 0.6),
     );
   }
 
@@ -260,7 +260,7 @@ class TherapistCompactCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 1,
-      shadowColor: Colors.black.withOpacity(0.05),
+      shadowColor: Colors.black.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
@@ -275,7 +275,7 @@ class TherapistCompactCard extends StatelessWidget {
                 height: 50,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.lightGreen.withOpacity(0.1),
+                  color: AppTheme.lightGreen.withValues(alpha: 0.1),
                 ),
                 child: therapist.hasProfilePic
                     ? ClipOval(

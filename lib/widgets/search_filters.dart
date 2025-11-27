@@ -190,7 +190,7 @@ class _TherapistSearchFiltersWidgetState
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -284,13 +284,13 @@ class _TherapistSearchFiltersWidgetState
               });
             },
             selectedColor: AppTheme.primaryGreen,
-            backgroundColor: AppTheme.lightGreen.withOpacity(0.1),
+            backgroundColor: AppTheme.lightGreen.withValues(alpha: 0.1),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
                 color: isSelected
                     ? AppTheme.primaryGreen
-                    : AppTheme.lightGreen.withOpacity(0.3),
+                    : AppTheme.lightGreen.withValues(alpha: 0.3),
               ),
             ),
           );
@@ -305,19 +305,19 @@ class _TherapistSearchFiltersWidgetState
       child: Column(
         children: [
           DropdownButtonFormField<String>(
-            value: _filters.selectedLocation,
+            initialValue: _filters.selectedLocation,
             decoration: InputDecoration(
               hintText: 'Select location',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: AppTheme.lightGreen.withOpacity(0.3),
+                  color: AppTheme.lightGreen.withValues(alpha: 0.3),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: AppTheme.lightGreen.withOpacity(0.3),
+                  color: AppTheme.lightGreen.withValues(alpha: 0.3),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -402,7 +402,7 @@ class _TherapistSearchFiltersWidgetState
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _filters.minExperience,
+                  initialValue: _filters.minExperience,
                   decoration: InputDecoration(
                     labelText: 'Min Experience',
                     border: OutlineInputBorder(
@@ -441,7 +441,7 @@ class _TherapistSearchFiltersWidgetState
       child: Column(
         children: [
           DropdownButtonFormField<double>(
-            value: _filters.minRating,
+            initialValue: _filters.minRating,
             decoration: InputDecoration(
               labelText: 'Min Rating',
               border: OutlineInputBorder(
@@ -491,7 +491,7 @@ class _TherapistSearchFiltersWidgetState
             _filters.verifiedOnly = value;
           });
         },
-        activeColor: AppTheme.primaryGreen,
+        activeThumbColor: AppTheme.primaryGreen,
         contentPadding: EdgeInsets.zero,
       ),
     );
@@ -643,12 +643,12 @@ class QuickFilterChips extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.primaryGreen
-              : AppTheme.lightGreen.withOpacity(0.1),
+              : AppTheme.lightGreen.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? AppTheme.primaryGreen
-                : AppTheme.lightGreen.withOpacity(0.3),
+                : AppTheme.lightGreen.withValues(alpha: 0.3),
           ),
         ),
         child: Text(

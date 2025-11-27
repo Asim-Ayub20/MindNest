@@ -79,6 +79,8 @@ class _MindNestAppState extends State<MindNestApp> {
   Widget? _initialScreen;
   StreamSubscription<Uri>? _linkSubscription;
   StreamSubscription<AuthState>? _authSubscription;
+  bool _isHandlingEmailVerification =
+      false; // Flag to prevent duplicate navigation
 
   @override
   void initState() {
@@ -301,6 +303,14 @@ class _MindNestAppState extends State<MindNestApp> {
       return;
     }
 
+    // Prevent duplicate navigation if we're already handling email verification
+    if (_isHandlingEmailVerification) {
+      debugPrint(
+        'Already handling email verification, skipping duplicate navigation',
+      );
+      return;
+    }
+
     try {
       // Get user profile to determine role and onboarding status
       final profile = await Supabase.instance.client
@@ -336,15 +346,21 @@ class _MindNestAppState extends State<MindNestApp> {
       // Check if this is a new user who just verified their email
       // This should only happen when:
       // 1. User has 0% onboarding progress (completely new)
-      // 2. User is coming from a deep link (email verification)
+      // 2. User is NOT currently on the EmailVerificationFlowScreen (to avoid duplicate navigation)
       // 3. The current route is null or '/' (not from login screen)
+      //
+      // NOTE: If user is already on EmailVerificationFlowScreen waiting for verification,
+      // we should NOT navigate here - let that screen handle the success transition
       final isNewUserFromEmailVerification =
           progressPercentage == 0 &&
           (currentRoute == null || currentRoute == '/') &&
-          user.emailConfirmedAt != null;
+          user.emailConfirmedAt != null &&
+          !EmailVerificationFlowScreen
+              .isActive; // Don't navigate if screen is already active
 
       // Only show email verification success for truly new users from email verification
-      // Not for existing users logging in from the login screen
+      // This should realistically only trigger for users who verify from another device
+      // or browser and aren't currently on the verification waiting screen
       if (isNewUserFromEmailVerification) {
         // Double-check this is really a new user by checking if they have any profile data
         try {
@@ -367,8 +383,12 @@ class _MindNestAppState extends State<MindNestApp> {
           // If user has no profile data and no onboarding progress, they're truly new
           if (hasPatientData == null && hasTherapistData == null) {
             debugPrint(
-              'New user from email verification - showing success screen',
+              '[MainApp] New user from email verification - showing success screen',
             );
+
+            // Set flag to prevent duplicate handling within a short time window
+            _isHandlingEmailVerification = true;
+
             if (context.mounted) {
               Navigator.of(context).pushAndRemoveUntil(
                 CustomPageTransitions.slideFromRight<void>(
@@ -380,11 +400,30 @@ class _MindNestAppState extends State<MindNestApp> {
                 (route) => false,
               );
             }
+
+            // Reset flag after screen transition completes
+            Future.delayed(const Duration(seconds: 5), () {
+              _isHandlingEmailVerification = false;
+            });
+
             return;
+          } else {
+            debugPrint(
+              '[MainApp] User has existing profile data, skipping email verification screen',
+            );
           }
         } catch (e) {
-          debugPrint('Error checking user profile data: $e');
+          debugPrint('[MainApp] Error checking user profile data: $e');
         }
+      }
+
+      // If EmailVerificationFlowScreen is currently active, don't auto-navigate
+      // Let the user manually click "Continue" from the success screen
+      if (EmailVerificationFlowScreen.isActive) {
+        debugPrint(
+          '[MainApp] EmailVerificationFlowScreen is active - skipping auto-navigation to let user manually proceed',
+        );
+        return;
       }
 
       // Check if context is still mounted before navigation

@@ -16,11 +16,17 @@ class EmailVerificationFlowScreen extends StatefulWidget {
   final String email;
   final String userType; // 'patient' or 'therapist'
 
+  // Static flag to track if an instance is currently active
+  static bool _isCurrentlyActive = false;
+
   const EmailVerificationFlowScreen({
     super.key,
     required this.email,
     required this.userType,
   });
+
+  // Static method to check if screen is currently displayed
+  static bool get isActive => _isCurrentlyActive;
 
   @override
   State<EmailVerificationFlowScreen> createState() =>
@@ -40,6 +46,10 @@ class _EmailVerificationFlowScreenState
   @override
   void initState() {
     super.initState();
+    // Mark this screen as active
+    EmailVerificationFlowScreen._isCurrentlyActive = true;
+    debugPrint('[EmailVerificationFlowScreen] Screen is now active');
+
     _initializeAnimations();
     _listenForVerification();
   }
@@ -63,6 +73,10 @@ class _EmailVerificationFlowScreenState
 
   @override
   void dispose() {
+    // Mark this screen as inactive when disposed
+    EmailVerificationFlowScreen._isCurrentlyActive = false;
+    debugPrint('[EmailVerificationFlowScreen] Screen is now inactive');
+
     _authSubscription?.cancel();
     _successAnimationController.dispose();
     super.dispose();
@@ -72,16 +86,29 @@ class _EmailVerificationFlowScreenState
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
       data,
     ) {
+      // Only handle signedIn events with confirmed email
       if (data.event == AuthChangeEvent.signedIn &&
           data.session?.user.emailConfirmedAt != null) {
-        debugPrint('Email verified successfully!');
+        debugPrint(
+          '[EmailVerificationFlowScreen] Email verified successfully!',
+        );
         _handleSuccessfulVerification();
       }
     });
   }
 
   Future<void> _handleSuccessfulVerification() async {
-    if (!mounted || _isVerified) return;
+    // Prevent duplicate handling
+    if (!mounted || _isVerified) {
+      debugPrint(
+        '[EmailVerificationFlowScreen] Already verified or not mounted, skipping',
+      );
+      return;
+    }
+
+    debugPrint(
+      '[EmailVerificationFlowScreen] Handling successful verification',
+    );
 
     setState(() {
       _isVerified = true;
@@ -90,12 +117,8 @@ class _EmailVerificationFlowScreenState
     // Start success animation
     _successAnimationController.forward();
 
-    // Wait for animation and user to see success message
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (mounted) {
-      _navigateToNextScreen();
-    }
+    // User must manually click the "Continue" button to proceed
+    // No automatic navigation
   }
 
   Future<void> _navigateToNextScreen() async {
@@ -492,27 +515,6 @@ class _EmailVerificationFlowScreenState
             ),
           ),
           const SizedBox(height: 40),
-          const Column(
-            children: [
-              SizedBox(
-                width: 32,
-                height: 32,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Preparing your experience...',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF9CA3AF),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );

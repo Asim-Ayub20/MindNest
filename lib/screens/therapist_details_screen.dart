@@ -871,11 +871,18 @@ class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
       'consultation_fee': int.tryParse(_consultationFeeController.text.trim()),
       'availability': {'schedule': _selectedAvailability},
       'profile_pic_url': profilePicUrl,
+      'is_verified': true, // Mark as verified when profile is complete
       'created_at': DateTime.now().toIso8601String(),
       'updated_at': DateTime.now().toIso8601String(),
     };
 
+    debugPrint('[SAVE DEBUG] Saving therapist data: $therapistData');
+
     await Supabase.instance.client.from('therapists').upsert(therapistData);
+
+    debugPrint(
+      '[SAVE DEBUG] Therapist profile saved successfully with is_verified: true',
+    );
 
     // Update the profiles table
     final profileData = {

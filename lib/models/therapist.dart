@@ -16,6 +16,7 @@ class Therapist {
   final int consultationFee;
   final Map<String, dynamic>? availability;
   final String? profilePicUrl;
+  final bool isVerified;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -37,6 +38,7 @@ class Therapist {
     required this.consultationFee,
     this.availability,
     this.profilePicUrl,
+    this.isVerified = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -62,6 +64,7 @@ class Therapist {
       consultationFee: json['consultation_fee'] ?? 0,
       availability: json['availability'],
       profilePicUrl: json['profile_pic_url'],
+      isVerified: json['is_verified'] ?? false,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
@@ -90,6 +93,7 @@ class Therapist {
       'consultation_fee': consultationFee,
       'availability': availability,
       'profile_pic_url': profilePicUrl,
+      'is_verified': isVerified,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -158,8 +162,8 @@ class Therapist {
   }
 
   bool matchesRating(double? minRating) {
-    // Since rating doesn't exist in current schema, always return true
-    // TODO: Implement when rating system is added
+    // Rating system not implemented yet
+    // TODO: Implement when rating/review system is added
     return true;
   }
 

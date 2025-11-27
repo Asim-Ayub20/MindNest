@@ -888,6 +888,7 @@ class _TherapistProfileTabState extends State<TherapistProfileTab> {
             int.tryParse(_consultationFeeController.text.trim()) ?? 0,
         'specialization': _selectedSpecializations,
         'availability': {'schedule': _selectedAvailability},
+        'is_verified': true, // Mark as verified when profile is updated
         'updated_at': DateTime.now().toIso8601String(),
       };
 

@@ -120,7 +120,7 @@ class _MindNestAppState extends State<MindNestApp> {
             userRole == 'therapist'
             ? Supabase.instance.client
                   .from('therapists')
-                  .select('id')
+                  .select('id, is_verified')
                   .eq('id', user.id)
                   .maybeSingle()
             : Future.value(null);
@@ -148,12 +148,31 @@ class _MindNestAppState extends State<MindNestApp> {
           }
         } else if (userRole == 'therapist') {
           final therapistDetails = await therapistFuture;
-          if (therapistDetails == null) {
-            // Therapist hasn't completed profile details
+
+          // Debug: Print what we got from database
+          debugPrint('[AUTH DEBUG] Therapist details: $therapistDetails');
+          if (therapistDetails != null) {
+            debugPrint(
+              '[AUTH DEBUG] is_verified value: ${therapistDetails['is_verified']}',
+            );
+            debugPrint(
+              '[AUTH DEBUG] is_verified type: ${therapistDetails['is_verified'].runtimeType}',
+            );
+          }
+
+          if (therapistDetails == null ||
+              therapistDetails['is_verified'] != true) {
+            debugPrint(
+              '[AUTH DEBUG] Redirecting to TherapistDetailsScreen - therapistDetails: $therapistDetails, is_verified: ${therapistDetails?['is_verified']}',
+            );
+            // Therapist hasn't completed profile details or isn't verified
             setState(() {
               _initialScreen = TherapistDetailsScreen();
             });
           } else {
+            debugPrint(
+              '[AUTH DEBUG] Redirecting to TherapistDashboardScreen - is_verified: ${therapistDetails['is_verified']}',
+            );
             setState(() {
               _initialScreen = TherapistDashboardScreen();
             });
@@ -338,6 +357,34 @@ class _MindNestAppState extends State<MindNestApp> {
       final progressPercentage =
           onboarding?['progress_percentage'] as int? ?? 0;
 
+      // Check if therapist already has a verified profile
+      bool isVerifiedTherapist = false;
+      if (userRole == 'therapist') {
+        final therapistDetails = await Supabase.instance.client
+            .from('therapists')
+            .select('is_verified')
+            .eq('id', user.id)
+            .maybeSingle();
+        isVerifiedTherapist = therapistDetails?['is_verified'] == true;
+        debugPrint(
+          '[MAIN DEBUG] Therapist verification check: isVerifiedTherapist=$isVerifiedTherapist, therapistDetails=$therapistDetails',
+        );
+      }
+
+      // Check if patient already has a complete profile
+      bool hasPatientProfile = false;
+      if (userRole == 'patient') {
+        final patientDetails = await Supabase.instance.client
+            .from('patients')
+            .select('id')
+            .eq('id', user.id)
+            .maybeSingle();
+        hasPatientProfile = patientDetails != null;
+        debugPrint(
+          '[MAIN DEBUG] Patient profile check: hasPatientProfile=$hasPatientProfile, patientDetails=$patientDetails, user.id=${user.id}',
+        );
+      }
+
       // Get current route to determine the navigation context
       final currentRoute = context.mounted
           ? ModalRoute.of(context)?.settings.name
@@ -348,6 +395,8 @@ class _MindNestAppState extends State<MindNestApp> {
       // 1. User has 0% onboarding progress (completely new)
       // 2. User is NOT currently on the EmailVerificationFlowScreen (to avoid duplicate navigation)
       // 3. The current route is null or '/' (not from login screen)
+      // 4. For therapists: they don't already have a verified profile
+      // 5. For patients: they don't already have a complete profile
       //
       // NOTE: If user is already on EmailVerificationFlowScreen waiting for verification,
       // we should NOT navigate here - let that screen handle the success transition
@@ -375,7 +424,7 @@ class _MindNestAppState extends State<MindNestApp> {
           final hasTherapistData = userRole == 'therapist'
               ? await Supabase.instance.client
                     .from('therapists')
-                    .select('id')
+                    .select('id, is_verified')
                     .eq('id', user.id)
                     .maybeSingle()
               : null;
@@ -429,7 +478,13 @@ class _MindNestAppState extends State<MindNestApp> {
       // Check if context is still mounted before navigation
       if (!context.mounted) return;
 
-      if (progressPercentage < 100) {
+      // Skip onboarding for users who already have complete profiles
+      if (progressPercentage < 100 &&
+          !(userRole == 'therapist' && isVerifiedTherapist) &&
+          !(userRole == 'patient' && hasPatientProfile)) {
+        debugPrint(
+          '[MAIN DEBUG] Redirecting to onboarding - progressPercentage: $progressPercentage, userRole: $userRole, isVerifiedTherapist: $isVerifiedTherapist, hasPatientProfile: $hasPatientProfile',
+        );
         // Navigate to appropriate onboarding screen
         if (userRole == 'patient') {
           Navigator.of(context).pushAndRemoveUntil(
@@ -447,15 +502,13 @@ class _MindNestAppState extends State<MindNestApp> {
           );
         }
       } else {
+        debugPrint(
+          '[MAIN DEBUG] Skipping onboarding - progressPercentage: $progressPercentage, userRole: $userRole, isVerifiedTherapist: $isVerifiedTherapist, hasPatientProfile: $hasPatientProfile',
+        );
         // Check if patient needs to complete profile details
         if (userRole == 'patient') {
-          final patientDetails = await Supabase.instance.client
-              .from('patients')
-              .select('id')
-              .eq('id', user.id)
-              .maybeSingle();
-
-          if (patientDetails == null) {
+          // We already checked hasPatientProfile above, so use that result
+          if (!hasPatientProfile) {
             // Patient hasn't completed profile details, redirect to PatientDetailsScreen
             if (context.mounted) {
               Navigator.of(context).pushAndRemoveUntil(
@@ -470,12 +523,27 @@ class _MindNestAppState extends State<MindNestApp> {
         } else if (userRole == 'therapist') {
           final therapistDetails = await Supabase.instance.client
               .from('therapists')
-              .select('id')
+              .select('id, is_verified')
               .eq('id', user.id)
               .maybeSingle();
 
-          if (therapistDetails == null) {
-            // Therapist hasn't completed profile details, redirect to TherapistDetailsScreen
+          // Debug: Print what we got from database
+          debugPrint('[AUTH DEBUG 2] Therapist details: $therapistDetails');
+          if (therapistDetails != null) {
+            debugPrint(
+              '[AUTH DEBUG 2] is_verified value: ${therapistDetails['is_verified']}',
+            );
+            debugPrint(
+              '[AUTH DEBUG 2] is_verified type: ${therapistDetails['is_verified'].runtimeType}',
+            );
+          }
+
+          if (therapistDetails == null ||
+              therapistDetails['is_verified'] != true) {
+            debugPrint(
+              '[AUTH DEBUG 2] Redirecting to TherapistDetailsScreen - therapistDetails: $therapistDetails, is_verified: ${therapistDetails?['is_verified']}',
+            );
+            // Therapist hasn't completed profile details or isn't verified, redirect to TherapistDetailsScreen
             if (context.mounted) {
               Navigator.of(context).pushAndRemoveUntil(
                 CustomPageTransitions.slideFromRight<void>(

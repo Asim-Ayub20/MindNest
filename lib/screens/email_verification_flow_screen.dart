@@ -38,10 +38,21 @@ class _EmailVerificationFlowScreenState
     with TickerProviderStateMixin {
   bool _isResending = false;
   bool _isVerified = false;
+  late AnimationController _animationController;
   late AnimationController _successAnimationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
   late Animation<double> _successScaleAnimation;
   late Animation<double> _successFadeAnimation;
   StreamSubscription<AuthState>? _authSubscription;
+
+  // Mental wellness color palette
+  static const Color _primaryGreen = Color(0xFF7CB69D);
+  static const Color _deepGreen = Color(0xFF5A9A7F);
+  static const Color _softCream = Color(0xFFFAF9F6);
+  static const Color _warmGray = Color(0xFF6B7280);
+  static const Color _darkText = Color(0xFF2D3436);
+  static const Color _lightGray = Color(0xFFF3F4F6);
 
   @override
   void initState() {
@@ -55,6 +66,27 @@ class _EmailVerificationFlowScreenState
   }
 
   void _initializeAnimations() {
+    // Main entrance animation
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
+          ),
+        );
+    _animationController.forward();
+
+    // Success animation
     _successAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -78,6 +110,7 @@ class _EmailVerificationFlowScreenState
     debugPrint('[EmailVerificationFlowScreen] Screen is now inactive');
 
     _authSubscription?.cancel();
+    _animationController.dispose();
     _successAnimationController.dispose();
     super.dispose();
   }
@@ -259,45 +292,146 @@ class _EmailVerificationFlowScreenState
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          child: _isVerified ? _buildSuccessView() : _buildVerificationView(),
-        ),
+      backgroundColor: _softCream,
+      body: Stack(
+        children: [
+          // Background decorative elements
+          _buildBackgroundDecoration(size),
+
+          // Main content
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  child: _isVerified
+                      ? _buildSuccessView()
+                      : _buildVerificationView(),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildBackgroundDecoration(Size size) {
+    return Stack(
+      children: [
+        // Top right soft circle
+        Positioned(
+          top: -size.width * 0.3,
+          right: -size.width * 0.2,
+          child: Container(
+            width: size.width * 0.7,
+            height: size.width * 0.7,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  _primaryGreen.withValues(alpha: 0.15),
+                  _primaryGreen.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Bottom left soft circle
+        Positioned(
+          bottom: -size.width * 0.4,
+          left: -size.width * 0.3,
+          child: Container(
+            width: size.width * 0.8,
+            height: size.width * 0.8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  _deepGreen.withValues(alpha: 0.08),
+                  _deepGreen.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Subtle nature icons
+        Positioned(
+          top: size.height * 0.12,
+          left: 20,
+          child: Transform.rotate(
+            angle: -0.3,
+            child: Icon(
+              Icons.mail_outline_rounded,
+              size: 24,
+              color: _primaryGreen.withValues(alpha: 0.15),
+            ),
+          ),
+        ),
+        Positioned(
+          top: size.height * 0.2,
+          right: 30,
+          child: Transform.rotate(
+            angle: 0.5,
+            child: Icon(
+              Icons.mark_email_read_outlined,
+              size: 20,
+              color: _primaryGreen.withValues(alpha: 0.12),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: size.height * 0.25,
+          left: 40,
+          child: Transform.rotate(
+            angle: 0.2,
+            child: Icon(
+              Icons.spa_outlined,
+              size: 18,
+              color: _deepGreen.withValues(alpha: 0.1),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildVerificationView() {
+    final size = MediaQuery.of(context).size;
+
     return SingleChildScrollView(
       key: const ValueKey('verification'),
-      physics: const ClampingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           minHeight:
-              MediaQuery.of(context).size.height -
-              MediaQuery.of(context).viewPadding.top -
-              MediaQuery.of(context).viewPadding.bottom,
+              size.height -
+              MediaQuery.of(context).padding.top -
+              MediaQuery.of(context).padding.bottom,
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 28.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 60),
+              SizedBox(height: size.height * 0.06),
               _buildEmailIcon(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
               _buildVerificationTitle(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildVerificationMessage(),
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
               _buildResendButton(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildHelpText(),
-              const SizedBox(height: 60),
+              const SizedBox(height: 24),
               _buildBackToLoginButton(),
+              SizedBox(height: size.height * 0.04),
             ],
           ),
         ),
@@ -306,9 +440,11 @@ class _EmailVerificationFlowScreenState
   }
 
   Widget _buildSuccessView() {
+    final size = MediaQuery.of(context).size;
+
     return Padding(
       key: const ValueKey('success'),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 28.0),
       child: Column(
         children: [
           Expanded(
@@ -316,12 +452,13 @@ class _EmailVerificationFlowScreenState
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildSuccessIcon(),
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
                 _buildSuccessContent(),
               ],
             ),
           ),
           _buildContinueButton(),
+          SizedBox(height: size.height * 0.04),
         ],
       ),
     );
@@ -329,122 +466,264 @@ class _EmailVerificationFlowScreenState
 
   Widget _buildEmailIcon() {
     return Container(
-      width: 100,
-      height: 100,
+      width: 80,
+      height: 80,
       decoration: BoxDecoration(
-        color: const Color(0xFF10B981),
-        borderRadius: BorderRadius.circular(50),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_primaryGreen, _deepGreen],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryGreen.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: const Icon(Icons.email_outlined, color: Colors.white, size: 50),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+          const Icon(Icons.mail_outline_rounded, color: Colors.white, size: 36),
+        ],
+      ),
     );
   }
 
   Widget _buildVerificationTitle() {
-    return const Text(
-      'Check your email',
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF1F2937),
-      ),
-      textAlign: TextAlign.center,
+    return Column(
+      children: [
+        Text(
+          'Check your email',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w300,
+            color: _darkText,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: _primaryGreen.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '📧  Verification link sent',
+            style: TextStyle(
+              fontSize: 13,
+              color: _deepGreen,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildVerificationMessage() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: RichText(
-        textAlign: TextAlign.center,
-        text: TextSpan(
-          style: const TextStyle(
-            fontSize: 16,
-            color: Color(0xFF6B7280),
-            height: 1.5,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _lightGray, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: _darkText.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          children: [
-            const TextSpan(text: 'We sent a verification link to\n'),
-            TextSpan(
-              text: widget.email,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF10B981),
-              ),
+        ],
+      ),
+      child: Column(
+        children: [
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: TextStyle(fontSize: 14, color: _warmGray, height: 1.5),
+              children: [
+                const TextSpan(text: 'We sent a verification link to\n'),
+                TextSpan(
+                  text: widget.email,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: _deepGreen,
+                  ),
+                ),
+              ],
             ),
-            const TextSpan(
-              text:
-                  '\n\nClick the link in your email to verify your account and continue with your ',
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _lightGray,
+              borderRadius: BorderRadius.circular(10),
             ),
-            TextSpan(
-              text: widget.userType,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.userType == 'patient'
+                      ? Icons.person_outline_rounded
+                      : Icons.psychology_outlined,
+                  size: 16,
+                  color: _warmGray,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Registering as ${widget.userType}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _warmGray,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-            const TextSpan(text: ' registration.'),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildResendButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: _isResending ? null : _resendVerificationEmail,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF10B981),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          disabledBackgroundColor: const Color(0xFFE5E7EB),
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: _isResending
+              ? [_lightGray, _lightGray]
+              : [_primaryGreen, _deepGreen],
         ),
-        child: _isResending
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _isResending
+            ? null
+            : [
+                BoxShadow(
+                  color: _primaryGreen.withValues(alpha: 0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
-              )
-            : const Text(
-                'Resend verification email',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _isResending ? null : _resendVerificationEmail,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: _isResending
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(_warmGray),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.refresh_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Resend verification email',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildHelpText() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8.0),
-      child: Text(
-        'Didn\'t receive the email? Check your spam folder or try resending.',
-        style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
-        textAlign: TextAlign.center,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: _primaryGreen.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _primaryGreen.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.lightbulb_outline_rounded, size: 18, color: _primaryGreen),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Check your spam folder if you don\'t see the email.',
+              style: TextStyle(fontSize: 13, color: _warmGray, height: 1.4),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildBackToLoginButton() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24.0),
-      child: TextButton(
-        onPressed: () {
-          Navigator.pushReplacementNamed(context, '/login');
-        },
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+    return Container(
+      width: double.infinity,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _primaryGreen.withValues(alpha: 0.4),
+          width: 1.5,
         ),
-        child: const Text(
-          'Back to Sign In',
-          style: TextStyle(
-            color: Color(0xFF10B981),
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.pushReplacementNamed(context, '/login');
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.arrow_back_rounded, color: _deepGreen, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'Back to Sign In',
+                  style: TextStyle(
+                    color: _deepGreen,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -455,20 +734,37 @@ class _EmailVerificationFlowScreenState
     return ScaleTransition(
       scale: _successScaleAnimation,
       child: Container(
-        width: 120,
-        height: 120,
+        width: 90,
+        height: 90,
         decoration: BoxDecoration(
-          color: const Color(0xFF10B981),
-          borderRadius: BorderRadius.circular(60),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_primaryGreen, _deepGreen],
+          ),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: _primaryGreen.withValues(alpha: 0.4),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        child: const Icon(Icons.check, color: Colors.white, size: 60),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            const Icon(Icons.check_rounded, color: Colors.white, size: 44),
+          ],
+        ),
       ),
     );
   }
@@ -478,43 +774,76 @@ class _EmailVerificationFlowScreenState
       opacity: _successFadeAnimation,
       child: Column(
         children: [
-          const Text(
+          Text(
             'Email Verified!',
             style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
+              fontSize: 28,
+              fontWeight: FontWeight.w300,
+              color: _darkText,
+              letterSpacing: 1,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF6B7280),
-                height: 1.5,
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: _primaryGreen.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '✨  Welcome to MindNest',
+              style: TextStyle(
+                fontSize: 13,
+                color: _deepGreen,
+                fontWeight: FontWeight.w500,
               ),
-              children: [
-                const TextSpan(text: 'Welcome to MindNest! Your email '),
-                TextSpan(
-                  text: widget.email,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF10B981),
-                  ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _lightGray, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: _darkText.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                const TextSpan(text: ' has been successfully verified.\n\n'),
-                TextSpan(
-                  text:
-                      'Let\'s continue setting up your ${widget.userType} profile.',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+              ],
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  widget.userType == 'patient'
+                      ? Icons.spa_outlined
+                      : Icons.psychology_outlined,
+                  size: 32,
+                  color: _primaryGreen,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  widget.userType == 'patient'
+                      ? 'Your journey to wellness begins now'
+                      : 'Ready to make a difference',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: _darkText,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Let\'s set up your ${widget.userType} profile.',
+                  style: TextStyle(fontSize: 13, color: _warmGray),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 40),
         ],
       ),
     );
@@ -523,22 +852,51 @@ class _EmailVerificationFlowScreenState
   Widget _buildContinueButton() {
     return FadeTransition(
       opacity: _successFadeAnimation,
-      child: SizedBox(
+      child: Container(
         width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          onPressed: _navigateToNextScreen,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF10B981),
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_primaryGreen, _deepGreen],
           ),
-          child: const Text(
-            'Continue',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: _primaryGreen.withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _navigateToNextScreen,
+            borderRadius: BorderRadius.circular(16),
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Continue',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

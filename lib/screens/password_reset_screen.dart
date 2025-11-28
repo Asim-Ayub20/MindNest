@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/ui_helpers.dart';
 import '../widgets/shared_password_input.dart';
 import '../utils/input_validators.dart';
-import '../utils/app_theme.dart';
 
 // Reset flow states
 enum ResetState { email, emailSent, tokenReset }
@@ -23,12 +22,14 @@ class PasswordResetScreen extends StatefulWidget {
 }
 
 class _PasswordResetScreenState extends State<PasswordResetScreen>
-    with SharedPasswordMixin {
+    with SharedPasswordMixin, SingleTickerProviderStateMixin {
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+  final FocusNode _confirmPasswordFocus = FocusNode();
 
   bool isLoading = false;
   bool isNewPasswordVisible = false;
@@ -39,14 +40,58 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
   String userEmail = '';
   String maskedEmail = '';
 
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Mental wellness color palette
+  static const Color _primaryGreen = Color(0xFF7CB69D);
+  static const Color _deepGreen = Color(0xFF5A9A7F);
+  static const Color _softCream = Color(0xFFFAF9F6);
+  static const Color _warmGray = Color(0xFF6B7280);
+  static const Color _darkText = Color(0xFF2D3436);
+  static const Color _lightGray = Color(0xFFF3F4F6);
+
   @override
   void initState() {
     super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
+          ),
+        );
+    _animationController.forward();
+
     // If opened from deep link, go directly to token reset
     if (widget.isFromDeepLink && widget.resetSession != null) {
       currentState = ResetState.tokenReset;
       userEmail = widget.resetSession!.user.email ?? '';
     }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    emailController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    _confirmPasswordFocus.dispose();
+    super.dispose();
   }
 
   // Utility function to mask email
@@ -140,124 +185,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
     UIHelpers.showMessage(context, message, isError: isError);
   }
 
-  // Reusable UI helper methods
-  Widget _buildStyledTextField({
-    required TextEditingController controller,
-    required String hintText,
-    required IconData prefixIcon,
-    TextInputType? keyboardType,
-    int? maxLength,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.lightText.withValues(alpha: 0.3)),
-      ),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(color: AppTheme.lightText),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-          prefixIcon: Icon(prefixIcon, color: AppTheme.lightText),
-        ),
-        keyboardType: keyboardType,
-        maxLength: maxLength,
-        buildCounter: maxLength != null
-            ? (
-                context, {
-                required currentLength,
-                required isFocused,
-                maxLength,
-              }) => null
-            : null,
-      ),
-    );
-  }
-
-  Widget _buildStyledButton({
-    required String text,
-    required VoidCallback? onPressed,
-    bool isLoading = false,
-  }) {
-    return Container(
-      width: double.infinity,
-      height: 52,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: AppTheme.primaryGradient,
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryGreen.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          disabledBackgroundColor: AppTheme.lightText.withValues(alpha: 0.3),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildFieldLabel(String label) {
-    return Text(
-      label,
-      style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
-        color: AppTheme.primaryText,
-        fontWeight: FontWeight.w500,
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(title, style: AppTheme.lightTheme.textTheme.displayMedium);
-  }
-
-  Widget _buildSectionDescription(String description) {
-    return Text(
-      description,
-      style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-        color: AppTheme.secondaryText,
-        height: 1.5,
-      ),
-    );
-  }
-
   Future<void> _handleAsyncOperation(Future<void> Function() operation) async {
     setState(() => isLoading = true);
     try {
@@ -273,109 +200,444 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
     }
   }
 
-  Widget buildEmailStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      backgroundColor: _softCream,
+      body: Stack(
+        children: [
+          // Background decorative elements
+          _buildBackgroundDecoration(size),
+
+          // Main content
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight:
+                          size.height -
+                          MediaQuery.of(context).padding.top -
+                          MediaQuery.of(context).padding.bottom,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                      child: Column(
+                        children: [
+                          SizedBox(height: size.height * 0.02),
+
+                          // Back button
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: _buildBackButton(),
+                          ),
+                          SizedBox(height: size.height * 0.03),
+
+                          // Progress indicator (hide for token reset flow)
+                          if (currentState != ResetState.tokenReset)
+                            _buildProgressIndicator(),
+
+                          // Current step content
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 400),
+                            child: _buildCurrentStep(),
+                          ),
+
+                          SizedBox(height: size.height * 0.04),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackgroundDecoration(Size size) {
+    return Stack(
       children: [
-        _buildSectionTitle('Reset Password'),
-        SizedBox(height: 12),
-        _buildSectionDescription(
-          'Enter your email address and we\'ll send you a verification code to reset your password.',
+        // Top right soft circle
+        Positioned(
+          top: -size.width * 0.3,
+          right: -size.width * 0.2,
+          child: Container(
+            width: size.width * 0.7,
+            height: size.width * 0.7,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  _primaryGreen.withValues(alpha: 0.15),
+                  _primaryGreen.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
         ),
-        SizedBox(height: 40),
-        _buildFieldLabel('Email Address'),
-        SizedBox(height: 8),
-        _buildStyledTextField(
+        // Bottom left soft circle
+        Positioned(
+          bottom: -size.width * 0.4,
+          left: -size.width * 0.3,
+          child: Container(
+            width: size.width * 0.8,
+            height: size.width * 0.8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  _deepGreen.withValues(alpha: 0.08),
+                  _deepGreen.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Subtle icons
+        Positioned(
+          top: size.height * 0.15,
+          left: 20,
+          child: Transform.rotate(
+            angle: -0.3,
+            child: Icon(
+              Icons.lock_outline_rounded,
+              size: 24,
+              color: _primaryGreen.withValues(alpha: 0.15),
+            ),
+          ),
+        ),
+        Positioned(
+          top: size.height * 0.25,
+          right: 30,
+          child: Transform.rotate(
+            angle: 0.5,
+            child: Icon(
+              Icons.key_rounded,
+              size: 20,
+              color: _primaryGreen.withValues(alpha: 0.12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: _darkText.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => Navigator.of(context).pop(),
+          borderRadius: BorderRadius.circular(12),
+          child: Icon(Icons.arrow_back_rounded, color: _darkText, size: 20),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressIndicator() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      child: Row(
+        children: [
+          // Step 1 - Email
+          _buildProgressStep(
+            icon: Icons.email_outlined,
+            isActive: true,
+            isCompleted: currentState == ResetState.emailSent,
+          ),
+          Expanded(
+            child: Container(
+              height: 2,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: currentState == ResetState.emailSent
+                      ? [_primaryGreen, _deepGreen]
+                      : [_lightGray, _lightGray],
+                ),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+          // Step 2 - Sent
+          _buildProgressStep(
+            icon: Icons.mark_email_read_outlined,
+            isActive: currentState == ResetState.emailSent,
+            isCompleted: false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressStep({
+    required IconData icon,
+    required bool isActive,
+    required bool isCompleted,
+  }) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        gradient: isActive || isCompleted
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_primaryGreen, _deepGreen],
+              )
+            : null,
+        color: isActive || isCompleted ? null : _lightGray,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: isActive || isCompleted
+            ? [
+                BoxShadow(
+                  color: _primaryGreen.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Icon(
+        icon,
+        color: isActive || isCompleted ? Colors.white : _warmGray,
+        size: 18,
+      ),
+    );
+  }
+
+  Widget _buildCurrentStep() {
+    switch (currentState) {
+      case ResetState.email:
+        return _buildEmailStep();
+      case ResetState.emailSent:
+        return _buildEmailSentStep();
+      case ResetState.tokenReset:
+        return _buildTokenResetStep();
+    }
+  }
+
+  Widget _buildEmailStep() {
+    return Column(
+      key: const ValueKey('email'),
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Icon
+        _buildStepIcon(Icons.lock_reset_rounded),
+        const SizedBox(height: 16),
+
+        // Title
+        Text(
+          'Reset Password',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w300,
+            color: _darkText,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: _primaryGreen.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '🔐  Secure recovery',
+            style: TextStyle(
+              fontSize: 13,
+              color: _deepGreen,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Description
+        Text(
+          'Enter your email address and we\'ll send you a link to reset your password.',
+          style: TextStyle(fontSize: 14, color: _warmGray, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+
+        // Email field
+        _buildTextField(
           controller: emailController,
+          focusNode: _emailFocus,
           hintText: 'Enter your email address',
-          prefixIcon: Icons.email_outlined,
+          icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
         ),
-        SizedBox(height: 32),
-        _buildStyledButton(
+        const SizedBox(height: 20),
+
+        // Send button
+        _buildPrimaryButton(
           text: 'Send Reset Link',
           onPressed: sendPasswordReset,
           isLoading: isLoading,
         ),
+        const SizedBox(height: 16),
+
+        // Back to login
+        _buildSecondaryButton(
+          text: 'Back to Sign In',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ],
     );
   }
 
-  Widget buildEmailSentStep() {
+  Widget _buildEmailSentStep() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      key: const ValueKey('emailSent'),
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _buildSectionTitle('Check Your Email'),
-        SizedBox(height: 12),
-        RichText(
-          text: TextSpan(
+        // Icon
+        _buildStepIcon(Icons.mark_email_read_outlined),
+        const SizedBox(height: 16),
+
+        // Title
+        Text(
+          'Check Your Email',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w300,
+            color: _darkText,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: _primaryGreen.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '📧  Link sent successfully',
             style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFF6B7280),
-              height: 1.5,
+              fontSize: 13,
+              color: _deepGreen,
+              fontWeight: FontWeight.w500,
             ),
-            children: [
-              TextSpan(text: 'We\'ve sent a password reset link to '),
-              TextSpan(
-                text: maskedEmail,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF10B981),
-                ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Email info card
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _lightGray, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: _darkText.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              TextSpan(
-                text:
-                    '. Please click the link in the email to reset your password.',
+            ],
+          ),
+          child: Column(
+            children: [
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: TextStyle(fontSize: 14, color: _warmGray, height: 1.5),
+                  children: [
+                    const TextSpan(text: 'We\'ve sent a reset link to\n'),
+                    TextSpan(
+                      text: maskedEmail,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: _deepGreen,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        SizedBox(height: 40),
+        const SizedBox(height: 16),
+
+        // Tip card
         Container(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0FDF4),
+            color: _primaryGreen.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+              color: _primaryGreen.withValues(alpha: 0.1),
+              width: 1,
             ),
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.mark_email_read_outlined,
-                color: AppTheme.darkGreen,
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
+              Icon(Icons.schedule_rounded, size: 18, color: _primaryGreen),
+              const SizedBox(width: 10),
+              Expanded(
                 child: Text(
-                  'The link will expire in 1 hour. If you don\'t see it, check your spam folder.',
-                  style: TextStyle(color: AppTheme.darkGreen, fontSize: 14),
+                  'Link expires in 1 hour. Check spam folder if not found.',
+                  style: TextStyle(fontSize: 13, color: _warmGray, height: 1.4),
                 ),
               ),
             ],
           ),
         ),
-        SizedBox(height: 32),
-        _buildStyledButton(
-          text: 'Back to Login',
+        const SizedBox(height: 24),
+
+        // Back to login
+        _buildPrimaryButton(
+          text: 'Back to Sign In',
           onPressed: () => Navigator.of(context).pop(),
           isLoading: false,
         ),
-        SizedBox(height: 20),
-        Center(
-          child: TextButton(
-            onPressed: () {
-              setState(() {
-                currentState = ResetState.email;
-              });
-            },
-            child: Text(
-              'Wrong email? Try again',
-              style: TextStyle(
-                color: AppTheme.primaryGreen,
-                fontWeight: FontWeight.w600,
-              ),
+        const SizedBox(height: 12),
+
+        // Try again
+        TextButton(
+          onPressed: () {
+            setState(() {
+              currentState = ResetState.email;
+            });
+          },
+          child: Text(
+            'Wrong email? Try again',
+            style: TextStyle(
+              color: _deepGreen,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
         ),
@@ -383,60 +645,92 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
     );
   }
 
-  Widget buildTokenResetStep() {
+  Widget _buildTokenResetStep() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      key: const ValueKey('tokenReset'),
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _buildSectionTitle('Reset Your Password'),
-        SizedBox(height: 12),
-        _buildSectionDescription(
-          'Enter your new password below. Make sure it\'s at least 8 characters long.',
-        ),
-        SizedBox(height: 40),
-        SharedPasswordInput(
-          passwordController: newPasswordController,
-          confirmPasswordController: confirmPasswordController,
-          isPasswordVisible: isNewPasswordVisible,
-          isConfirmPasswordVisible: isConfirmPasswordVisible,
-          onPasswordVisibilityToggle: () =>
-              setState(() => isNewPasswordVisible = !isNewPasswordVisible),
-          onConfirmPasswordVisibilityToggle: () => setState(
-            () => isConfirmPasswordVisible = !isConfirmPasswordVisible,
+        // Icon
+        _buildStepIcon(Icons.password_rounded),
+        const SizedBox(height: 16),
+
+        // Title
+        Text(
+          'Create New Password',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w300,
+            color: _darkText,
+            letterSpacing: 1,
           ),
-          passwordError: passwordError,
-          onPasswordChanged: (value) => validatePassword(value),
-          onConfirmPasswordChanged: (value) => setState(() {}),
-          passwordHint: 'Enter new password (8+ characters)',
-          confirmPasswordHint: 'Confirm new password',
         ),
-        SizedBox(height: 32),
-        _buildStyledButton(
+        const SizedBox(height: 8),
+
+        // Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: _primaryGreen.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '🔑  Almost there',
+            style: TextStyle(
+              fontSize: 13,
+              color: _deepGreen,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Description
+        Text(
+          'Enter your new password below. Make sure it\'s strong and secure.',
+          style: TextStyle(fontSize: 14, color: _warmGray, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+
+        // Password fields section
+        _buildPasswordSection(),
+        const SizedBox(height: 20),
+
+        // Update button
+        _buildPrimaryButton(
           text: 'Update Password',
           onPressed: resetPasswordWithToken,
           isLoading: isLoading,
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 16),
+
+        // Info card
         Container(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: const Color(0xFFF0F9FF),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.accentBlue.withValues(alpha: 0.3),
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+              width: 1,
             ),
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.info_outline,
-                color: AppTheme.darkBlue,
-                size: 20,
+              Icon(
+                Icons.info_outline_rounded,
+                size: 18,
+                color: const Color(0xFF3B82F6),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
+              const SizedBox(width: 10),
+              Expanded(
                 child: Text(
-                  'After updating your password, you\'ll be signed out and redirected to the login screen.',
-                  style: TextStyle(color: AppTheme.darkBlue, fontSize: 14),
+                  'After updating, you\'ll be redirected to sign in.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: const Color(0xFF1E40AF),
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
@@ -446,101 +740,324 @@ class _PasswordResetScreenState extends State<PasswordResetScreen>
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryText),
-          onPressed: () => Navigator.of(context).pop(),
+  Widget _buildStepIcon(IconData icon) {
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_primaryGreen, _deepGreen],
         ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryGreen.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Progress indicator (hide for token reset flow)
-              if (currentState != ResetState.tokenReset)
-                Container(
-                  margin: EdgeInsets.only(bottom: 40),
-                  child: Row(
-                    children: [
-                      // Step 1
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.email_outlined,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          height: 2,
-                          margin: EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: currentState == ResetState.emailSent
-                                ? AppTheme.primaryGreen
-                                : AppTheme.lightText.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(1),
-                          ),
-                        ),
-                      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          Icon(icon, color: Colors.white, size: 32),
+        ],
+      ),
+    );
+  }
 
-                      // Step 2
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: currentState == ResetState.emailSent
-                              ? AppTheme.primaryGreen
-                              : AppTheme.lightText.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          Icons.mark_email_read_outlined,
-                          color: currentState == ResetState.emailSent
-                              ? Colors.white
-                              : AppTheme.lightText,
-                          size: 18,
-                        ),
-                      ),
-                    ],
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String hintText,
+    required IconData icon,
+    TextInputType? keyboardType,
+    bool isPassword = false,
+    bool? isPasswordVisible,
+    VoidCallback? onToggleVisibility,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _lightGray, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: _darkText.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        obscureText: isPassword && !(isPasswordVisible ?? false),
+        keyboardType: keyboardType,
+        style: TextStyle(
+          color: _darkText,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: _warmGray.withValues(alpha: 0.6),
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 16, right: 12),
+            child: Icon(icon, color: _primaryGreen, size: 22),
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 50),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    isPasswordVisible ?? false
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: _warmGray,
+                    size: 20,
                   ),
-                ),
-
-              // Current step content
-              if (currentState == ResetState.email)
-                buildEmailStep()
-              else if (currentState == ResetState.emailSent)
-                buildEmailSentStep()
-              else if (currentState == ResetState.tokenReset)
-                buildTokenResetStep()
-              else
-                buildEmailStep(),
-            ],
+                  onPressed: onToggleVisibility,
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 14,
           ),
         ),
       ),
     );
   }
 
-  @override
-  void dispose() {
-    emailController.dispose();
+  Widget _buildPasswordSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // New password field
+        _buildTextField(
+          controller: newPasswordController,
+          focusNode: _passwordFocus,
+          hintText: 'Enter new password',
+          icon: Icons.lock_outline_rounded,
+          isPassword: true,
+          isPasswordVisible: isNewPasswordVisible,
+          onToggleVisibility: () {
+            setState(() => isNewPasswordVisible = !isNewPasswordVisible);
+          },
+        ),
+        const SizedBox(height: 8),
 
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
-    super.dispose();
+        // Password strength indicators
+        _buildPasswordStrengthIndicator(),
+        const SizedBox(height: 12),
+
+        // Confirm password field
+        _buildTextField(
+          controller: confirmPasswordController,
+          focusNode: _confirmPasswordFocus,
+          hintText: 'Confirm new password',
+          icon: Icons.lock_outline_rounded,
+          isPassword: true,
+          isPasswordVisible: isConfirmPasswordVisible,
+          onToggleVisibility: () {
+            setState(
+              () => isConfirmPasswordVisible = !isConfirmPasswordVisible,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordStrengthIndicator() {
+    final password = newPasswordController.text;
+    final hasMinLength = password.length >= 8;
+    final hasUppercase = password.contains(RegExp(r'[A-Z]'));
+    final hasLowercase = password.contains(RegExp(r'[a-z]'));
+    final hasNumber = password.contains(RegExp(r'[0-9]'));
+    final hasSpecial = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _lightGray.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Password requirements:',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _darkText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _buildRequirementChip('8+ chars', hasMinLength),
+              _buildRequirementChip('A-Z', hasUppercase),
+              _buildRequirementChip('a-z', hasLowercase),
+              _buildRequirementChip('0-9', hasNumber),
+              _buildRequirementChip('!@#\$', hasSpecial),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRequirementChip(String label, bool isMet) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isMet
+            ? _primaryGreen.withValues(alpha: 0.15)
+            : _warmGray.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isMet
+              ? _primaryGreen.withValues(alpha: 0.3)
+              : _warmGray.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.circle_outlined,
+            size: 12,
+            color: isMet ? _deepGreen : _warmGray,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isMet ? _deepGreen : _warmGray,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrimaryButton({
+    required String text,
+    required VoidCallback onPressed,
+    required bool isLoading,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isLoading
+              ? [_lightGray, _lightGray]
+              : [_primaryGreen, _deepGreen],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isLoading
+            ? null
+            : [
+                BoxShadow(
+                  color: _primaryGreen.withValues(alpha: 0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(_warmGray),
+                    ),
+                  )
+                : Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _primaryGreen.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.arrow_back_rounded, color: _deepGreen, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: _deepGreen,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

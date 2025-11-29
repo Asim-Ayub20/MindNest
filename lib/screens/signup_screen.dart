@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/page_transitions.dart';
 import '../utils/ui_helpers.dart';
-import 'patient_onboarding_screen.dart';
-import 'therapist_onboarding_screen.dart';
+import 'onboarding_screen.dart';
 import 'email_verification_flow_screen.dart';
 import '../widgets/shared_password_input.dart';
 import '../utils/input_validators.dart';
@@ -157,20 +156,12 @@ class _SignupScreenState extends State<SignupScreen>
         } else {
           _showMessage('Account created! Welcome to MindNest!', isError: false);
           if (mounted) {
-            // Navigate to appropriate onboarding based on user type
-            if (widget.userType == 'patient') {
-              Navigator.of(context).pushReplacement(
-                CustomPageTransitions.slideFromRight<void>(
-                  PatientOnboardingScreen(),
-                ),
-              );
-            } else {
-              Navigator.of(context).pushReplacement(
-                CustomPageTransitions.slideFromRight<void>(
-                  TherapistOnboardingScreen(),
-                ),
-              );
-            }
+            // Navigate to unified onboarding screen
+            Navigator.of(context).pushReplacement(
+              CustomPageTransitions.slideFromRight<void>(
+                OnboardingScreen(userType: widget.userType),
+              ),
+            );
           }
         }
       }

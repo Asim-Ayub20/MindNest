@@ -485,63 +485,86 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
   Widget _buildContinueButton() {
     final bool isEnabled = selectedUserType != null;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: double.infinity,
-      height: 52,
-      decoration: BoxDecoration(
-        gradient: isEnabled
-            ? LinearGradient(
+    return Stack(
+      children: [
+        // Disabled state (gray background)
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: isEnabled ? 0.0 : 1.0,
+          child: Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              color: _lightGray,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Text(
+                'Continue',
+                style: TextStyle(
+                  color: _warmGray.withValues(alpha: 0.5),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Enabled state (gradient background)
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: isEnabled ? 1.0 : 0.0,
+          child: Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [_primaryGreen, _deepGreen],
-              )
-            : null,
-        color: isEnabled ? null : _lightGray,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isEnabled
-            ? [
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
                 BoxShadow(
                   color: _primaryGreen.withValues(alpha: 0.35),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isEnabled ? _proceedToSignup : null,
-          borderRadius: BorderRadius.circular(16),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Continue',
-                  style: TextStyle(
-                    color: isEnabled
-                        ? Colors.white
-                        : _warmGray.withValues(alpha: 0.5),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isEnabled ? _proceedToSignup : null,
+                borderRadius: BorderRadius.circular(16),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Continue',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        size: 20,
+                      ),
+                    ],
                   ),
                 ),
-                if (isEnabled) ...[
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    size: 20,
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 

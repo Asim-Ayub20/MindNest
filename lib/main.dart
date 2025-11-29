@@ -9,11 +9,10 @@ import 'screens/login_screen.dart';
 import 'screens/user_type_selection_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/patient_dashboard_screen.dart';
-import 'screens/patient_onboarding_screen.dart';
 import 'screens/patient_details_screen.dart';
 import 'screens/therapist_dashboard_screen.dart';
-import 'screens/therapist_onboarding_screen.dart';
-import 'screens/therapist_details_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/therapist_data_form_screen.dart';
 import 'screens/password_reset_screen.dart';
 import 'screens/email_verification_flow_screen.dart';
 import 'utils/page_transitions.dart';
@@ -167,7 +166,7 @@ class _MindNestAppState extends State<MindNestApp> {
             );
             // Therapist hasn't completed profile details or isn't verified
             setState(() {
-              _initialScreen = TherapistDetailsScreen();
+              _initialScreen = TherapistDataFormScreen();
             });
           } else {
             debugPrint(
@@ -486,17 +485,18 @@ class _MindNestAppState extends State<MindNestApp> {
           '[MAIN DEBUG] Redirecting to onboarding - progressPercentage: $progressPercentage, userRole: $userRole, isVerifiedTherapist: $isVerifiedTherapist, hasPatientProfile: $hasPatientProfile',
         );
         // Navigate to appropriate onboarding screen
+        // Navigate to appropriate onboarding screen
         if (userRole == 'patient') {
           Navigator.of(context).pushAndRemoveUntil(
             CustomPageTransitions.slideFromRight<void>(
-              PatientOnboardingScreen(),
+              OnboardingScreen(userType: 'patient'),
             ),
             (route) => false,
           );
         } else if (userRole == 'therapist') {
           Navigator.of(context).pushAndRemoveUntil(
             CustomPageTransitions.slideFromRight<void>(
-              TherapistOnboardingScreen(),
+              OnboardingScreen(userType: 'therapist'),
             ),
             (route) => false,
           );
@@ -547,7 +547,7 @@ class _MindNestAppState extends State<MindNestApp> {
             if (context.mounted) {
               Navigator.of(context).pushAndRemoveUntil(
                 CustomPageTransitions.slideFromRight<void>(
-                  TherapistDetailsScreen(),
+                  TherapistDataFormScreen(),
                 ),
                 (route) => false,
               );

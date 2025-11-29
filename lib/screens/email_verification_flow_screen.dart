@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/ui_helpers.dart';
 import '../utils/page_transitions.dart';
-import 'patient_onboarding_screen.dart';
+import 'onboarding_screen.dart';
 import 'patient_details_screen.dart';
 import 'patient_dashboard_screen.dart';
-import 'therapist_onboarding_screen.dart';
-import 'therapist_details_screen.dart';
+import 'therapist_data_form_screen.dart';
 import 'home_screen.dart';
 
 /// A unified email verification screen that handles both the verification waiting state
@@ -194,9 +193,9 @@ class _EmailVerificationFlowScreenState
   }
 
   void _navigateToOnboarding(String? userRole) {
-    final Widget targetScreen = userRole == 'patient'
-        ? PatientOnboardingScreen()
-        : TherapistOnboardingScreen();
+    final Widget targetScreen = OnboardingScreen(
+      userType: userRole ?? 'patient',
+    );
 
     Navigator.of(
       context,
@@ -229,7 +228,7 @@ class _EmailVerificationFlowScreenState
 
       if (therapistDetails == null && mounted) {
         Navigator.of(context).pushReplacement(
-          CustomPageTransitions.slideFromRight<void>(TherapistDetailsScreen()),
+          CustomPageTransitions.slideFromRight<void>(TherapistDataFormScreen()),
         );
         return;
       }

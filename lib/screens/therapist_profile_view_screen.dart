@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import '../models/therapist.dart';
 import '../utils/app_theme.dart';
 
-class TherapistDetailScreen extends StatefulWidget {
+class TherapistProfileViewScreen extends StatefulWidget {
   final Therapist therapist;
 
-  const TherapistDetailScreen({super.key, required this.therapist});
+  const TherapistProfileViewScreen({super.key, required this.therapist});
 
   @override
-  State<TherapistDetailScreen> createState() => _TherapistDetailScreenState();
+  State<TherapistProfileViewScreen> createState() =>
+      _TherapistProfileViewScreenState();
 }
 
-class _TherapistDetailScreenState extends State<TherapistDetailScreen> {
+class _TherapistProfileViewScreenState
+    extends State<TherapistProfileViewScreen> {
   bool _showFullBio = false;
 
   @override

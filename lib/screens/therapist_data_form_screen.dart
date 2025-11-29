@@ -12,14 +12,15 @@ import '../widgets/section_title.dart';
 import '../widgets/custom_dropdown.dart';
 import 'therapist_dashboard_screen.dart';
 
-class TherapistDetailsScreen extends StatefulWidget {
-  const TherapistDetailsScreen({super.key});
+class TherapistDataFormScreen extends StatefulWidget {
+  const TherapistDataFormScreen({super.key});
 
   @override
-  State<TherapistDetailsScreen> createState() => _TherapistDetailsScreenState();
+  State<TherapistDataFormScreen> createState() =>
+      _TherapistDataFormScreenState();
 }
 
-class _TherapistDetailsScreenState extends State<TherapistDetailsScreen> {
+class _TherapistDataFormScreenState extends State<TherapistDataFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 

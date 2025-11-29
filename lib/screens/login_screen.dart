@@ -693,7 +693,7 @@ class _LoginScreenState extends State<LoginScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Continue',
+                        'Sign In',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,

@@ -4,7 +4,7 @@ import '../../models/therapist.dart';
 import '../../services/therapist_search_service.dart';
 import '../../widgets/therapist_card.dart';
 import '../../widgets/search_filters.dart';
-import '../therapist_detail_screen.dart';
+import '../therapist_profile_view_screen.dart';
 
 class PatientFindTab extends StatefulWidget {
   const PatientFindTab({super.key});
@@ -157,7 +157,7 @@ class _PatientFindTabState extends State<PatientFindTab> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TherapistDetailScreen(therapist: therapist),
+        builder: (context) => TherapistProfileViewScreen(therapist: therapist),
       ),
     );
   }
